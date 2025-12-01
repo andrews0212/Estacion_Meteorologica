@@ -15,27 +15,17 @@ export MINIO_ALIAS="mi_minio"
 export MINIO_BUCKET="meteo-bronze"
 
 # Rutas locales
-PYTHON_SCRIPT="procces_data.py" # <--- ¡AJUSTA ESTA RUTA!
-PYTHON_VENV="venv_meteo/bin/python" # <--- ¡AJUSTA ESTA RUTA!
-SLEEP_INTERVAL=10  # 10 segundos (ajusta según la frecuencia de llegada de datos)
+PYTHON_SCRIPT="main.py"
+PYTHON_VENV="venv_meteo/bin/python"
 
 # ----------------------------------------------------
-# 2. BUCLE DE EJECUCIÓN CONSTANTE (BATCH)
+# 2. EJECUCIÓN DEL ETL
 # ----------------------------------------------------
 
-echo "Iniciando el proceso de batch de datos. Actualización cada $SLEEP_INTERVAL segundos."
+echo "🚀 Iniciando Sistema ETL Incremental PostgreSQL → MinIO"
 echo "Presiona Ctrl+C para detener."
+echo "----------------------------------------------------"
 
-while true; do
-    TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "----------------------------------------------------"
-    echo "--- INICIO DE BATCH: $TIMESTAMP ---"
-    
-    # Ejecuta el script de Python con el entorno virtual
-    $PYTHON_VENV $PYTHON_SCRIPT
-    
-    echo "--- FIN DE BATCH ---"
-    echo "Esperando $SLEEP_INTERVAL segundos..."
-    echo "----------------------------------------------------"
-    sleep $SLEEP_INTERVAL
-done
+# Ejecuta el script principal de Python con el entorno virtual
+# El bucle está dentro de main.py, no se necesita bucle en bash
+$PYTHON_VENV $PYTHON_SCRIPT

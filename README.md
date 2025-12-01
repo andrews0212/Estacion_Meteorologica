@@ -4,7 +4,7 @@ Sistema automatizado de extracción, transformación y carga (ETL) que extrae **
 
 ## 📋 Descripción General
 
-Este proyecto implementa un pipeline ETL incremental que:
+Este proyecto implementa un pipeline ETL incremental con **arquitectura modular orientada a objetos** que:
 - ✅ Extrae **solo registros nuevos** de todas las tablas de PostgreSQL
 - ✅ Detecta automáticamente **Primary Keys** o columnas de rastreo (timestamps o IDs incrementales)
 - ✅ **Valida datos nuevos** antes de procesar (compara último valor vs máximo actual)
@@ -12,6 +12,8 @@ Este proyecto implementa un pipeline ETL incremental que:
 - ✅ Sube archivos a **MinIO** (almacenamiento objeto compatible S3)
 - ✅ Mantiene un **control de estado** para evitar duplicados
 - ✅ Ejecuta automáticamente cada 10 segundos (configurable)
+- ✅ **Código modular**: cada componente en su propio archivo
+- ✅ **Fácil mantenimiento**: estructura clara y comentada
 
 ---
 
@@ -20,7 +22,7 @@ Este proyecto implementa un pipeline ETL incremental que:
 ```
 PostgreSQL (Origen)
     ↓
-[procces_data.py] → Extracción incremental
+[ETLPipeline] → Extracción incremental
     ↓
 Archivos Parquet (/tmp)
     ↓
@@ -31,169 +33,182 @@ meteo-bronze/tabla_nombre/tabla_TIMESTAMP.parquet
 
 ---
 
-## 📁 Estructura del Proyecto
+## 📁 Estructura del Proyecto (Modular OOP)
 
 ```
 pruebaMeteorologica/
-├── procces_data.py        # Script principal de ETL
-├── run_scheduler.sh       # Scheduler para ejecución automática
-├── venv_meteo/            # Entorno virtual Python
-└── README.md              # Este archivo
+├── main.py                          # 🚀 Punto de entrada principal
+├── run_scheduler.sh                 # Script Bash para ejecutar el sistema
+├── README.md                        # Documentación completa
+├── config/                          # 📝 Configuraciones
+│   ├── __init__.py
+│   ├── database_config.py          # Configuración de PostgreSQL
+│   └── minio_config.py             # Configuración de MinIO
+├── etl/                             # 🔧 Componentes del pipeline ETL
+│   ├── __init__.py
+│   ├── control_manager.py          # Gestión de tabla de control
+│   ├── table_inspector.py          # Inspección de estructura de tablas
+│   ├── data_extractor.py           # Extracción incremental de datos
+│   ├── parquet_writer.py           # Escritura de archivos Parquet
+│   ├── minio_uploader.py           # Subida de archivos a MinIO
+│   ├── table_processor.py          # Procesamiento de tabla individual
+│   └── pipeline.py                 # Pipeline completo del ETL
+└── venv_meteo/                      # Entorno virtual Python
 ```
+
+### **🎯 Ventajas de la estructura modular:**
+
+1. **Separación de responsabilidades**: Cada clase tiene una función específica
+2. **Reutilización**: Puedes importar componentes individualmente
+3. **Testing**: Facilita pruebas unitarias por componente
+4. **Mantenibilidad**: Fácil localizar y modificar funcionalidades
+5. **Escalabilidad**: Agregar nuevas features sin tocar código existente
+6. **Legibilidad**: Código organizado y bien documentado
 
 ---
 
-## 🔧 Componentes
+## 🔧 Componentes del Sistema
 
-### 1️⃣ `procces_data.py` - Script ETL Principal
+### 1️⃣ **Módulo `config/` - Configuraciones**
 
-#### **Funcionalidades principales:**
+#### **`DatabaseConfig`** (database_config.py)
+Clase que encapsula la configuración de PostgreSQL leyendo variables de entorno.
 
-##### 📌 `initialize_control_table(connection)`
-Crea la tabla `etl_control` en PostgreSQL para rastrear el estado de cada tabla procesada.
+**Propiedades:**
+- `user`: Usuario de PostgreSQL
+- `password`: Contraseña
+- `host`: IP del servidor
+- `database`: Nombre de la base de datos
+- `connection_url`: URL de conexión formateada
+
+#### **`MinIOConfig`** (minio_config.py)
+Clase que encapsula la configuración de MinIO.
+
+**Propiedades:**
+- `alias`: Alias configurado con `mc alias set`
+- `bucket`: Nombre del bucket de destino
+
+---
+
+### 2️⃣ **Módulo `etl/` - Pipeline ETL**
+
+#### **`ETLControlManager`** (control_manager.py)
+Gestiona la tabla `etl_control` que rastrea el estado de extracción de cada tabla.
+
+**Métodos:**
+- `initialize_table()`: Crea la tabla de control si no existe
+- `get_last_extracted_value(table_name)`: Obtiene el último valor extraído
+- `update_last_extracted_value(table_name, value, column)`: Actualiza usando UPSERT
 
 **Estructura de `etl_control`:**
 ```sql
 CREATE TABLE etl_control (
-    table_name VARCHAR(255) PRIMARY KEY,     -- Nombre de la tabla
-    last_extracted_value VARCHAR(255),       -- Último valor procesado (timestamp o ID)
-    last_extracted_at TIMESTAMP,             -- Fecha de última extracción
-    tracking_column VARCHAR(255)             -- Columna usada para rastreo
+    table_name VARCHAR(255) PRIMARY KEY,
+    last_extracted_value VARCHAR(255),
+    last_extracted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    tracking_column VARCHAR(255)
 )
 ```
 
-##### 📌 `detect_tracking_column(connection, table_name)`
-Detecta automáticamente la mejor columna para rastrear cambios incrementales.
+#### **`TableInspector`** (table_inspector.py)
+Inspecciona la estructura de las tablas de PostgreSQL.
+
+**Métodos:**
+- `get_all_tables()`: Lista todas las tablas (excepto etl_control)
+- `get_columns(table_name)`: Obtiene columnas con sus tipos
+- `detect_tracking_column(table_name)`: Detecta la mejor columna para rastreo
 
 **Prioridad de detección:**
-1. **Columnas de timestamp:** `created_at`, `updated_at`, `timestamp`, `fecha_registro`, `last_update`, `release_date`
-2. **Primary Key real de la base de datos** (consulta metadatos de PostgreSQL - método más confiable)
-3. **Columnas con nombre 'id'** (de tipo INTEGER, SERIAL o NUMERIC)
+1. Columnas de timestamp (`created_at`, `updated_at`, etc.)
+2. PRIMARY KEY numérica (consulta metadatos PostgreSQL)
+3. Columna llamada 'id' genérica
 
-**Retorna:** `(nombre_columna, tipo)` donde tipo es `'timestamp'` o `'id'`
+#### **`DataExtractor`** (data_extractor.py)
+Extrae datos incrementales de PostgreSQL.
 
-**Ventaja:** Al usar la PRIMARY KEY real, garantiza que se detecten correctamente IDs como `movie_id`, `person_id`, etc.
+**Métodos:**
+- `extract_incremental(last_value)`: Extrae solo datos nuevos
 
-##### 📌 `get_last_extracted_value(connection, table_name)`
-Consulta el último valor extraído de una tabla desde `etl_control`.
+**Lógica:**
+- Si `last_value` existe: `SELECT * WHERE columna > last_value`
+- Si es primera carga: `SELECT * FROM tabla`
 
-**Retorna:** `(último_valor, columna_rastreo)` o `(None, None)` si es la primera extracción.
+#### **`ParquetWriter`** (parquet_writer.py)
+Gestiona la escritura de archivos Parquet.
 
-##### 📌 `update_last_extracted_value(connection, table_name, value, tracking_column)`
-Actualiza o inserta el último valor procesado en `etl_control` usando `UPSERT` (INSERT ... ON CONFLICT).
+**Métodos:**
+- `write(dataframe)`: Guarda DataFrame en formato Parquet
+- `cleanup()`: Elimina archivo temporal
 
-##### 📌 `get_max_value_in_table(connection, table_name, tracking_column)`
-Obtiene el valor máximo actual en la tabla para la columna de rastreo.
+#### **`MinIOUploader`** (minio_uploader.py)
+Gestiona la subida de archivos a MinIO.
 
-**Uso:** Compara el último valor procesado con el máximo actual para evitar extracciones innecesarias.
+**Métodos:**
+- `upload(local_path, table_name, file_name)`: Sube archivo usando cliente `mc`
 
-##### 📌 `process_batch()`
-Función principal que orquesta todo el proceso ETL.
+#### **`TableProcessor`** (table_processor.py)
+Orquesta el procesamiento completo de una tabla.
 
-**Flujo de ejecución mejorado:**
+**Flujo:**
+1. Detecta columna de rastreo
+2. Obtiene último valor procesado
+3. Extrae datos nuevos
+4. Guarda en Parquet
+5. Sube a MinIO
+6. Actualiza control
 
-1. **Inicialización:**
-   - Crea tabla `etl_control` si no existe
-   - Obtiene lista de todas las tablas de PostgreSQL (excluyendo `etl_control`)
+**Retorna:** Cantidad de registros procesados
 
-2. **Por cada tabla:**
-   ```python
-   # 1. Detectar columna de rastreo (prioriza PRIMARY KEY)
-   tracking_column, tracking_type = detect_tracking_column(connection, table_name)
-   
-   # 2. Si no hay columna de rastreo, SALTAMOS la tabla (evita cargas completas repetidas)
-   if not tracking_column:
-       print("⚠️ SKIPPING: No se detectó columna incremental")
-       continue
-   
-   # 3. Obtener último valor procesado
-   last_value, stored_column = get_last_extracted_value(connection, table_name)
-   
-   # 4. Verificar si hay datos nuevos (optimización clave)
-   max_value_in_table = get_max_value_in_table(connection, table_name, tracking_column)
-   if last_value >= max_value_in_table:
-       print("✓ No hay datos nuevos")
-       continue
-   
-   # 5. Construir query incremental
-   if last_value:
-       query = f"SELECT * FROM {table_name} WHERE {tracking_column} > :val"
-   else:
-       query = f"SELECT * FROM {table_name}"  # Primera carga
-   ```
+#### **`ETLPipeline`** (pipeline.py)
+Pipeline principal que coordina todo el ETL.
 
-3. **Procesamiento:**
-   - Si `df.empty`: No hay datos nuevos → **no crea archivo, no gasta recursos**
-   - Si hay datos: Guarda en Parquet y sube a MinIO
-
-4. **Actualización de control:**
-   - Calcula el valor máximo de la columna de rastreo: `df[tracking_column].max()`
-   - Actualiza `etl_control` **solo si la carga a MinIO fue exitosa**
-
-5. **Resumen final:**
-   - Muestra total de registros nuevos procesados en el batch
+**Métodos:**
+- `process_batch()`: Procesa un batch completo de todas las tablas
+- `run_continuous(interval_seconds)`: Ejecuta el ETL en bucle infinito
 
 ---
 
-### 2️⃣ `run_scheduler.sh` - Scheduler de Ejecución
+### 3️⃣ **`main.py` - Punto de Entrada**
+
+Script principal que inicializa y ejecuta el sistema ETL.
+
+**Funcionalidad:**
+- Carga configuraciones (DB y MinIO)
+- Crea instancia del pipeline
+- Ejecuta en modo continuo con intervalo de 10 segundos
+- Maneja interrupción con Ctrl+C
+
+---
+
+### 4️⃣ **`run_scheduler.sh` - Script de Ejecución**
 
 Script Bash que ejecuta el ETL de forma continua en intervalos regulares.
+
+Script Bash que configura variables de entorno y ejecuta `main.py`.
 
 #### **Configuración:**
 
 ```bash
 # --- POSTGRESQL ---
-export PG_DB="cine"                    # Nombre de la base de datos
-export PG_USER="postgres"              # Usuario PostgreSQL
-export PG_PASS="1234"                  # Contraseña
-export PG_HOST="127.0.0.1"             # IP del servidor
+export PG_DB="cine"
+export PG_USER="postgres"
+export PG_PASS="1234"
+export PG_HOST="127.0.0.1"
 
 # --- MINIO ---
-export MINIO_ALIAS="mi_minio"          # Alias configurado con 'mc alias set'
-export MINIO_BUCKET="meteo-bronze"     # Bucket de destino
+export MINIO_ALIAS="mi_minio"
+export MINIO_BUCKET="meteo-bronze"
 
 # --- EJECUCIÓN ---
-PYTHON_SCRIPT="procces_data.py"
+PYTHON_SCRIPT="main.py"
 PYTHON_VENV="venv_meteo/bin/python"
-SLEEP_INTERVAL=10                      # 10 segundos (ajustable según necesidad)
-```
-
-#### **Flujo de ejecución:**
-
-**Nota:** El script `procces_data.py` ahora incluye el bucle interno, por lo que puede ejecutarse directamente:
-
-```python
-# Dentro de procces_data.py
-if __name__ == "__main__":
-    while True:
-        process_batch()
-        print("Esperando 10 segundos...")
-        time.sleep(10)
-```
-
-O mediante el script bash tradicional:
-
-```bash
-while true; do
-    TIMESTAMP=$(date +"%Y-%m-%d %H:%M:%S")
-    echo "--- INICIO DE BATCH: $TIMESTAMP ---"
-    
-    # Ejecutar ETL con Python del entorno virtual
-    $PYTHON_VENV $PYTHON_SCRIPT
-    
-    echo "--- FIN DE BATCH ---"
-    echo "Esperando $SLEEP_INTERVAL segundos..."
-    sleep $SLEEP_INTERVAL
-done
 ```
 
 **Características:**
-- ✅ Bucle infinito con intervalo configurable (10 segundos por defecto)
-- ✅ Usa el Python del entorno virtual
-- ✅ Variables de entorno exportadas para `procces_data.py`
-- ✅ Timestamps en cada ejecución
+- ✅ Exporta variables de entorno
+- ✅ Usa Python del entorno virtual
+- ✅ Ejecuta `main.py` que contiene el bucle infinito
 - ✅ Detener con `Ctrl+C`
-- ✅ **Validación previa:** Verifica si hay datos nuevos antes de procesarlos
 
 ---
 
@@ -259,30 +274,35 @@ chmod +x run_scheduler.sh
 
 ## ▶️ Uso
 
-### **Ejecución manual única:**
-
-```bash
-source venv_meteo/bin/activate
-python procces_data.py
-```
-
-### **Ejecución automática continua:**
+### **Ejecución recomendada (con script bash):**
 
 ```bash
 ./run_scheduler.sh
 ```
 
-Esto ejecutará el ETL cada **5 minutos** indefinidamente. Para detener, presiona `Ctrl+C`.
+### **Ejecución manual con Python:**
+
+```bash
+# Exportar variables de entorno
+export PG_DB="cine" PG_USER="postgres" PG_PASS="1234" PG_HOST="127.0.0.1"
+export MINIO_ALIAS="mi_minio" MINIO_BUCKET="meteo-bronze"
+
+# Activar entorno virtual y ejecutar
+source venv_meteo/bin/activate
+python main.py
+```
+
+El sistema ejecutará el ETL cada **10 segundos** indefinidamente. Para detener, presiona `Ctrl+C`.
 
 ### **Cambiar frecuencia de ejecución:**
 
-Editar en `run_scheduler.sh`:
+Editar en `main.py` la función `main()`:
 
-```bash
-SLEEP_INTERVAL=60    # 1 minuto
-SLEEP_INTERVAL=300   # 5 minutos (actual)
-SLEEP_INTERVAL=900   # 15 minutos
-SLEEP_INTERVAL=3600  # 1 hora
+```python
+# Cambiar el intervalo (en segundos)
+pipeline.run_continuous(interval_seconds=10)   # 10 segundos (actual)
+pipeline.run_continuous(interval_seconds=60)   # 1 minuto
+pipeline.run_continuous(interval_seconds=300)  # 5 minutos
 ```
 
 ---
@@ -292,51 +312,58 @@ SLEEP_INTERVAL=3600  # 1 hora
 ### **Primera ejecución:**
 
 ```
+🚀 Iniciando Sistema ETL Incremental
 ============================================================
-Procesando tabla: peliculas
+📊 Base de datos: cine@127.0.0.1
+🗄️  MinIO Bucket: meteo-bronze
 ============================================================
-🆕 Primera extracción de peliculas. Extrayendo todos los datos.
-📦 Registros nuevos encontrados: 150
-💾 Datos guardados localmente: /tmp/peliculas_20251201143025.parquet
-✅ Cargado exitosamente a MinIO Bronce: mi_minio/meteo-bronze/peliculas/peliculas_20251201143025.parquet
-🔄 Control actualizado. Nuevo último valor: 2025-12-01 14:30:25
 
-============================================================
-🎯 RESUMEN: 150 registros nuevos procesados en total
-============================================================
+--- INICIO DE BATCH: 2025-12-01 23:10:15 ---
+
+Procesando tabla: movie
+   🆕 Carga Inicial (movie_id)
+   📦 Registros nuevos: 3
+   ✅ Subido a MinIO: movie_20251201231015.parquet
+
+Procesando tabla: person
+   🆕 Carga Inicial (person_id)
+   📦 Registros nuevos: 9
+   ✅ Subido a MinIO: person_20251201231015.parquet
+
+🎯 RESUMEN: 12 registros nuevos en este batch.
+Esperando 10 segundos...
 ```
 
-### **Segunda ejecución (5 minutos después):**
+### **Segunda ejecución (10 segundos después - sin cambios):**
 
 ```
-============================================================
-Procesando tabla: peliculas
-============================================================
-📊 Columna de rastreo: created_at
-📅 Último valor procesado: 2025-12-01 14:30:25
-📦 Registros nuevos encontrados: 12
-💾 Datos guardados localmente: /tmp/peliculas_20251201143525.parquet
-✅ Cargado exitosamente a MinIO Bronce: mi_minio/meteo-bronze/peliculas/peliculas_20251201143525.parquet
-🔄 Control actualizado. Nuevo último valor: 2025-12-01 14:35:20
+--- INICIO DE BATCH: 2025-12-01 23:10:25 ---
 
-============================================================
-🎯 RESUMEN: 12 registros nuevos procesados en total
-============================================================
+Procesando tabla: movie
+   ✓ No hay datos nuevos.
+
+Procesando tabla: person
+   ✓ No hay datos nuevos.
+
+🎯 RESUMEN: 0 registros nuevos en este batch.
+Esperando 10 segundos...
 ```
 
-### **Tercera ejecución (sin datos nuevos):**
+### **Tercera ejecución (después de insertar 2 películas nuevas):**
 
 ```
-============================================================
-Procesando tabla: peliculas
-============================================================
-📊 Columna de rastreo: created_at
-📅 Último valor procesado: 2025-12-01 14:35:20
-✓ No hay datos nuevos en peliculas.
+--- INICIO DE BATCH: 2025-12-01 23:10:35 ---
 
-============================================================
-🎯 RESUMEN: 0 registros nuevos procesados en total
-============================================================
+Procesando tabla: movie
+   📊 Incremental (movie_id) > 3
+   📦 Registros nuevos: 2
+   ✅ Subido a MinIO: movie_20251201231035.parquet
+
+Procesando tabla: person
+   ✓ No hay datos nuevos.
+
+🎯 RESUMEN: 2 registros nuevos en este batch.
+Esperando 10 segundos...
 ```
 
 ---
@@ -345,18 +372,20 @@ Procesando tabla: peliculas
 
 ```
 meteo-bronze/
-├── peliculas/
-│   ├── peliculas_20251201143025.parquet  (150 registros - primera carga)
-│   ├── peliculas_20251201143525.parquet  (12 registros - solo nuevos)
-│   └── peliculas_20251201144025.parquet  (8 registros - solo nuevos)
-├── actores/
-│   ├── actores_20251201143025.parquet
-│   └── actores_20251201143525.parquet
-└── directores/
-    └── directores_20251201143025.parquet
+├── movie/
+│   ├── movie_20251201231015.parquet  (3 registros - primera carga)
+│   ├── movie_20251201231035.parquet  (2 registros - solo nuevos)
+│   └── movie_20251202081525.parquet  (1 registro - solo nuevo)
+├── person/
+│   ├── person_20251201231015.parquet  (9 registros - primera carga)
+│   └── person_20251202091035.parquet  (4 registros - solo nuevos)
+├── genre/
+│   └── genre_20251201231015.parquet  (5 registros - primera carga)
+└── keyword/
+    └── keyword_20251201231015.parquet  (120 registros - primera carga)
 ```
 
-**Cada archivo Parquet contiene SOLO los registros nuevos** desde la última extracción.
+**Cada archivo Parquet contiene SOLO los registros nuevos** desde la última extracción. La estructura de carpetas replica los nombres de las tablas de PostgreSQL.
 
 ---
 
@@ -366,13 +395,13 @@ meteo-bronze/
 
 ```bash
 mc ls mi_minio/meteo-bronze/
-mc ls mi_minio/meteo-bronze/peliculas/
+mc ls mi_minio/meteo-bronze/movie/
 ```
 
 ### **Descargar archivo Parquet:**
 
 ```bash
-mc cp mi_minio/meteo-bronze/peliculas/peliculas_20251201143025.parquet ./
+mc cp mi_minio/meteo-bronze/movie/movie_20251201231015.parquet ./
 ```
 
 ### **Leer Parquet con Python:**
@@ -380,9 +409,10 @@ mc cp mi_minio/meteo-bronze/peliculas/peliculas_20251201143025.parquet ./
 ```python
 import pandas as pd
 
-df = pd.read_parquet('peliculas_20251201143025.parquet')
+df = pd.read_parquet('movie_20251201231015.parquet')
 print(df.head())
 print(f"Total registros: {len(df)}")
+print(df.columns.tolist())  # Ver columnas
 ```
 
 ### **Consultar tabla de control en PostgreSQL:**
@@ -395,9 +425,10 @@ Resultado:
 ```
 table_name  | last_extracted_value    | last_extracted_at       | tracking_column
 ------------|-------------------------|-------------------------|----------------
-peliculas   | 2025-12-01 14:35:20     | 2025-12-01 14:35:30     | created_at
-actores     | 2025-12-01 14:35:18     | 2025-12-01 14:35:30     | updated_at
-directores  | 523                     | 2025-12-01 14:30:30     | id
+movie       | 5                       | 2025-12-01 23:10:35     | movie_id
+person      | 9                       | 2025-12-01 23:10:15     | person_id
+genre       | 5                       | 2025-12-01 23:10:15     | genre_id
+keyword     | 120                     | 2025-12-01 23:10:15     | keyword_id
 ```
 
 ---
@@ -432,7 +463,12 @@ psql -h 127.0.0.1 -U postgres -d cine
 
 ### **No detecta columna de rastreo**
 
-Si tus tablas usan nombres personalizados, edita `detect_tracking_column()` en `procces_data.py`:
+El sistema automáticamente detecta columnas de rastreo en este orden:
+1. **Columnas timestamp:** `created_at`, `updated_at`, `timestamp`, `fecha`
+2. **PRIMARY KEY numérico:** Detectado desde metadatos de PostgreSQL
+3. **Columna 'id':** Si existe y es numérica
+
+Si tus tablas usan nombres personalizados, edita `detect_tracking_column()` en `etl/table_inspector.py`:
 
 ```python
 timestamp_candidates = ['created_at', 'updated_at', 'timestamp', 'fecha', 'date', 'datetime', 'tu_columna_custom']
@@ -453,19 +489,63 @@ timestamp_candidates = ['created_at', 'updated_at', 'timestamp', 'fecha', 'date'
 
 ## 📝 Notas Importantes
 
-1. **Límite de seguridad:** Por defecto extrae máximo 10,000 filas por tabla por ejecución (ajustable en el código).
+1. **Límite de seguridad:** Por defecto extrae máximo 10,000 filas por tabla por ejecución (ajustable en `etl/data_extractor.py`).
 
 2. **Archivos incrementales:** Cada Parquet contiene SOLO datos nuevos. Para análisis, deberás unir todos los archivos de una tabla.
 
 3. **Primera ejecución lenta:** La primera vez extrae todos los datos. Las siguientes solo incrementales.
 
-4. **Tablas sin rastreo:** Si una tabla no tiene timestamp ni ID incremental, se extraen todos los datos en cada ejecución.
+4. **Tablas sin rastreo:** Si una tabla no tiene timestamp ni PRIMARY KEY numérico, será **OMITIDA** (no se procesará).
+
+5. **Validación automática:** El sistema compara el último valor procesado con el máximo actual en la tabla antes de extraer datos. Si no hay cambios, omite la extracción.
+
+6. **Arquitectura OOP:** El código está organizado en módulos (`config/` y `etl/`) siguiendo principios de programación orientada a objetos para facilitar mantenimiento y extensión.
+
+---
+
+## 🏗️ Arquitectura del Sistema
+
+```
+┌─────────────┐
+│ PostgreSQL  │  (Base de datos cine)
+│   (cine)    │  ← Tablas: movie, person, genre, keyword...
+└──────┬──────┘
+       │
+       │ 1. SQLAlchemy extrae datos incrementales
+       ↓
+┌─────────────────────────────────────────────────┐
+│          Sistema ETL (Python OOP)               │
+│ ┌─────────────────────────────────────────────┐ │
+│ │ ETLControlManager: Rastrea último valor    │ │
+│ │ TableInspector: Detecta PRIMARY KEYs       │ │
+│ │ DataExtractor: Extrae solo datos nuevos    │ │
+│ │ ParquetWriter: Genera archivos .parquet    │ │
+│ │ MinIOUploader: Sube a object storage       │ │
+│ └─────────────────────────────────────────────┘ │
+└──────┬──────────────────────────────────────────┘
+       │
+       │ 2. Archivos Parquet comprimidos
+       ↓
+┌─────────────┐
+│   MinIO     │  (Object Storage - Capa Bronze)
+│   Bucket:   │  ← Estructura: meteo-bronze/tabla/archivo.parquet
+│ meteo-bronze│
+└─────────────┘
+```
+
+**Flujo completo:**
+1. El sistema consulta PostgreSQL cada 10 segundos
+2. Detecta PRIMARY KEY o timestamp de cada tabla
+3. Compara último valor procesado vs máximo actual
+4. Si hay datos nuevos: extrae → convierte a Parquet → sube a MinIO
+5. Si no hay cambios: omite procesamiento
+6. Actualiza tabla de control con nuevo último valor
 
 ---
 
 ## 👤 Autor
 
-Sistema desarrollado para procesamiento ETL incremental de datos meteorológicos con arquitectura Data Lake.
+Sistema desarrollado para procesamiento ETL incremental de base de datos de cine con arquitectura Data Lake.
 
 ---
 
