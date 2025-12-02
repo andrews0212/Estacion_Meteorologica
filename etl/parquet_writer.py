@@ -1,4 +1,5 @@
 import os
+import tempfile
 from datetime import datetime
 
 
@@ -24,7 +25,7 @@ class ParquetWriter:
         Genera automáticamente:
         - Timestamp actual para el nombre del archivo
         - Nombre de archivo con patrón: {tabla}_{timestamp}.parquet
-        - Ruta temporal en /tmp/ para guardar antes de subir a MinIO
+        - Ruta temporal (multiplataforma: /tmp en Linux, AppData\\Temp en Windows)
         """
         self.table_name = table_name
         
@@ -35,8 +36,10 @@ class ParquetWriter:
         # Nombre del archivo: movie_20251201231015.parquet
         self.file_name = f"{table_name}_{self.timestamp}.parquet"
         
-        # Guardar temporalmente en /tmp/ antes de subir a MinIO
-        self.local_path = f"/tmp/{self.file_name}"
+        # Guardar temporalmente en la carpeta temp del SO (multiplataforma)
+        # En Linux: /tmp/, en Windows: C:\Users\...\AppData\Local\Temp\
+        temp_dir = tempfile.gettempdir()
+        self.local_path = os.path.join(temp_dir, self.file_name)
     
     def write(self, dataframe):
         """
@@ -62,7 +65,7 @@ class ParquetWriter:
     
     def cleanup(self):
         """
-        Elimina el archivo temporal de /tmp/.
+        Elimina el archivo temporal.
         
         Se llama después de subir exitosamente a MinIO para liberar espacio.
         Es importante limpiar archivos temporales para evitar llenar el disco.

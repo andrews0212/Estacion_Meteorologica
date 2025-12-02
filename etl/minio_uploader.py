@@ -1,4 +1,4 @@
-import subprocess
+from minio import Minio
 
 
 class MinIOUploader:
@@ -6,7 +6,7 @@ class MinIOUploader:
     Gestiona la subida de archivos a MinIO (Object Storage).
     
     MinIO es compatible con S3 y se usa como Data Lake (capa bronze).
-    Usa el cliente de línea de comandos 'mc' (MinIO Client) para subir archivos.
+    Usa la biblioteca de Python 'minio' para subir archivos directamente.
     """
     
     def __init__(self, minio_config):
@@ -14,16 +14,24 @@ class MinIOUploader:
         Inicializa el uploader.
         
         Args:
-            minio_config: Instancia de MinIOConfig con alias y bucket
+            minio_config: Instancia de MinIOConfig con alias, bucket, endpoint, access_key, secret_key
         """
         self.config = minio_config
+        
+        # Crear cliente MinIO
+        self.client = Minio(
+            minio_config.endpoint,
+            access_key=minio_config.access_key,
+            secret_key=minio_config.secret_key,
+            secure=False  # usar HTTP en lugar de HTTPS
+        )
     
     def upload(self, local_path, table_name, file_name):
         """
-        Sube archivo a MinIO usando el cliente 'mc'.
+        Sube archivo a MinIO usando el cliente Python.
         
         Args:
-            local_path: Ruta local del archivo (ej: /tmp/movie_20251201231015.parquet)
+            local_path: Ruta local del archivo (ej: C:\\Users\\...\\AppData\\Local\\Temp\\movie_20251201231015.parquet)
             table_name: Nombre de la tabla (se usa para crear carpeta en MinIO)
             file_name: Nombre del archivo (ej: movie_20251201231015.parquet)
             
@@ -31,21 +39,20 @@ class MinIOUploader:
             str: Ruta completa en MinIO donde se subió el archivo
             
         Estructura de carpetas en MinIO:
-            mi_minio/meteo-bronze/movie/movie_20251201231015.parquet
-            mi_minio/meteo-bronze/person/person_20251201231015.parquet
-            
-        El comando ejecutado es equivalente a:
-            mc cp /tmp/movie_20251201231015.parquet mi_minio/meteo-bronze/movie/movie_20251201231015.parquet
+            meteo-bronze/movie/movie_20251201231015.parquet
+            meteo-bronze/person/person_20251201231015.parquet
             
         Raises:
-            CalledProcessError: Si el comando 'mc' falla (MinIO no disponible, credenciales incorrectas, etc.)
+            Exception: Si hay error en la conexión o subida a MinIO
         """
-        # Construir ruta en MinIO: alias/bucket/tabla/archivo
-        minio_path = f"{self.config.alias}/{self.config.bucket}/{table_name}/{file_name}"
+        # Construir ruta en MinIO: tabla/archivo
+        object_name = f"{table_name}/{file_name}"
         
-        # Ejecutar comando: mc cp <origen> <destino>
-        # check=True: Lanza excepción si el comando falla
-        # capture_output=True: Captura stdout/stderr para evitar mostrar en consola
-        subprocess.run(["mc", "cp", local_path, minio_path], check=True, capture_output=True)
+        # Subir archivo
+        self.client.fput_object(
+            self.config.bucket,
+            object_name,
+            local_path
+        )
         
-        return minio_path
+        return f"{self.config.bucket}/{object_name}"

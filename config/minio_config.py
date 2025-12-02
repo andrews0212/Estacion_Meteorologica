@@ -9,7 +9,9 @@ class MinIOConfig:
     archivos Parquet extraídos de PostgreSQL.
     
     Variables de entorno requeridas:
-        - MINIO_ALIAS: Alias configurado con el cliente 'mc' (ej: mi_minio)
+        - MINIO_ENDPOINT: URL del servidor MinIO (ej: localhost:9000)
+        - MINIO_ACCESS_KEY: Clave de acceso (ej: minioadmin)
+        - MINIO_SECRET_KEY: Clave secreta (ej: minioadmin)
         - MINIO_BUCKET: Nombre del bucket donde se guardarán los archivos
     """
     
@@ -17,14 +19,18 @@ class MinIOConfig:
         """
         Inicializa la configuración leyendo variables de entorno.
         
-        El alias debe estar previamente configurado con el comando:
-            mc alias set mi_minio http://localhost:9000 minioadmin minioadmin
-        
-        El bucket debe existir o crearse con:
-            mc mb mi_minio/meteo-bronze
+        Ejemplo de configuración en run_scheduler.ps1:
+            $env:MINIO_ENDPOINT = "localhost:9000"
+            $env:MINIO_ACCESS_KEY = "minioadmin"
+            $env:MINIO_SECRET_KEY = "minioadmin"
+            $env:MINIO_BUCKET = "meteo-bronze"
         """
-        # Alias de MinIO configurado con el cliente 'mc'
-        self.alias = os.environ.get('MINIO_ALIAS', 'myminio')
+        # Endpoint del servidor MinIO
+        self.endpoint = os.environ.get('MINIO_ENDPOINT', 'localhost:9000')
+        
+        # Credenciales de acceso
+        self.access_key = os.environ.get('MINIO_ACCESS_KEY', 'minioadmin')
+        self.secret_key = os.environ.get('MINIO_SECRET_KEY', 'minioadmin')
         
         # Nombre del bucket donde se almacenarán los archivos Parquet
         self.bucket = os.environ.get('MINIO_BUCKET', 'meteo-bronze')

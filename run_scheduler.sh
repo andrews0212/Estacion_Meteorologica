@@ -5,10 +5,10 @@
 # 1. CONFIGURACIÓN DE CONEXIONES
 # ----------------------------------------------------
 # Base de Datos PostgreSQL
-export PG_DB="cine"
+export PG_DB="postgres"
 export PG_USER="postgres"
 export PG_PASS="1234" # <--- ¡CÁMBIALA!
-export PG_HOST="127.0.0.1"           # <--- ¡IP DEL SERVIDOR DB!
+export PG_HOST="10.202.50.50"           # <--- ¡IP DEL SERVIDOR DB!
 
 # MinIO (Capa Bronce)
 export MINIO_ALIAS="mi_minio"
@@ -16,7 +16,7 @@ export MINIO_BUCKET="meteo-bronze"
 
 # Rutas locales
 PYTHON_SCRIPT="main.py"
-PYTHON_VENV="venv_meteo/bin/python"
+PYTHON_VENV="./venv_meteo/Scripts/python"
 
 # ----------------------------------------------------
 # 2. EJECUCIÓN DEL ETL
