@@ -1,13 +1,22 @@
-"""Pipeline principal de ETL que coordina todo el sistema."""
+"""Pipeline principal de ETL que coordina extracción, procesamiento y carga.
+
+El pipeline orquesta las siguientes etapas:
+- Inicialización de la tabla de control (etl_control)
+- Inspección de tablas disponibles en la base de datos
+- Extracción incremental por tabla
+- Serialización a archivos temporales y subida a MinIO
+
+El módulo utiliza SQLAlchemy para conexiones y pooling.
+"""
 
 import time
 from typing import Optional
 from datetime import datetime
 from sqlalchemy import create_engine, Connection
 from sqlalchemy.pool import QueuePool
-from .control_manager import ETLControlManager
-from .table_inspector import TableInspector
-from .table_processor import TableProcessor
+from etl.control import ETLControlManager
+from etl.extractors import TableInspector
+from etl.table_processor import TableProcessor
 from config import DatabaseConfig, MinIOConfig
 
 
@@ -36,11 +45,14 @@ class ETLPipeline:
         )
     
     def process_batch(self) -> int:
-        """
-        Procesa un batch completo de todas las tablas.
-        
+        """Procesa un batch completo de todas las tablas.
+
+        La función abre una conexión (pool), inicializa el gestor de control
+        y itera por todas las tablas detectadas aplicando el
+        :class:`etl.table_processor.TableProcessor`.
+
         Returns:
-            Total de registros procesados
+            Total de registros procesados en este batch
         """
         print(f"\n--- INICIO DE BATCH: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
         

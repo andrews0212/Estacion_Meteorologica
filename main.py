@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
-"""
-Sistema ETL Incremental con Limpieza Automática
-PostgreSQL → Bronce (CSV) → Silver (CSV)
+"""Punto de entrada del sistema ETL.
 
-Ejecutar:
+Este módulo contiene la clase :class:`ETLSystem` que orquesta el pipeline
+de extracción incremental y la limpieza automática (Estrategia REPLACE).
+
+Flujo general:
+- Extrae datos de PostgreSQL usando :class:`etl.pipeline.ETLPipeline`
+- Escribe resultados en Bronce (MinIO)
+- Ejecuta limpieza y publica datasets limpios en Silver
+
+Ejecutar en modo continuo::
     python main.py
 """
 
@@ -12,7 +18,7 @@ import time
 from typing import Optional
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-from etl.limpieza_bronce import LimpiezaBronce
+from etl.managers import LimpiezaBronce
 
 
 class ETLSystem:

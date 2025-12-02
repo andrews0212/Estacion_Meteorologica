@@ -3,16 +3,22 @@
 from typing import Optional
 from sqlalchemy import Connection
 import pandas as pd
-from .data_extractor import DataExtractor
-from .parquet_writer import DataWriter
-from .minio_uploader import MinIOUploader
-from .control_manager import ETLControlManager
-from .table_inspector import TableInspector
+from etl.extractors import DataExtractor, TableInspector
+from etl.writers import DataWriter
+from etl.uploaders import MinIOUploader
+from etl.control import ETLControlManager
 from config import MinIOConfig
 
 
 class TableProcessor:
-    """Procesa una tabla individual con extracción incremental."""
+    """Procesa una tabla individual con extracción incremental.
+
+    Se encarga de:
+    - Detectar columna de rastreo (timestamp o id)
+    - Extraer nuevos registros usando :class:`etl.data_extractor.DataExtractor`
+    - Guardar los datos en un archivo temporal y subirlos a MinIO
+    - Actualizar la tabla de control con el último valor extraído
+    """
     
     def __init__(self,
                  connection: Connection,
@@ -37,11 +43,16 @@ class TableProcessor:
         self.minio_config = minio_config
     
     def process(self) -> int:
-        """
-        Procesa tabla completa con extracción incremental.
-        
+        """Procesa tabla completa con extracción incremental.
+
+        Workflow resumido:
+        1. Detectar columna incremental (ej: created_at o id)
+        2. Obtener último valor procesado desde etl_control
+        3. Extraer registros nuevos
+        4. Si hay datos: escribir a archivo temporal, subir a MinIO y actualizar control
+
         Returns:
-            Cantidad de registros procesados
+            Cantidad de registros procesados (int)
         """
         print(f"\nProcesando tabla: {self.table_name}")
         
@@ -75,15 +86,28 @@ class TableProcessor:
         return 0
     
     def _process_extracted_data(self, df: pd.DataFrame, tracking_column: str) -> int:
-        """
-        Procesa datos extraídos.
-        
+        """Procesa datos extraídos y los sube a MinIO.
+
+        Este método realiza:
+        1. Serializar el ``DataFrame`` a un archivo temporal (CSV)
+        2. Subir el archivo al bucket Bronce usando :class:`MinIOUploader`
+        3. Actualizar la tabla de control con el valor máximo de la columna de rastreo
+
         Args:
-            df: DataFrame extraído
-            tracking_column: Columna de rastreo
-            
+            df (pandas.DataFrame): DataFrame con los registros a procesar.
+            tracking_column (str): Nombre de la columna usada para extracción incremental.
+
         Returns:
-            Cantidad de registros procesados
+            int: Cantidad de registros procesados (len(df)).
+
+        Ejemplo::
+
+            processor = TableProcessor(conn, 'sensor_readings', control_manager, inspector, minio_cfg)
+            count = processor._process_extracted_data(df, 'created_at')
+
+        Notas:
+            - El método maneja la limpieza del archivo temporal aunque la subida falle.
+            - Actualiza la tabla de control con el valor máximo encontrado en ``tracking_column``.
         """
         count = len(df)
         print(f"   📦 Registros nuevos: {count}")
