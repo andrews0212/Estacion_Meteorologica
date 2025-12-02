@@ -1,58 +1,110 @@
 #!/usr/bin/env python3
 """
-Sistema ETL Incremental PostgreSQL → MinIO
+Sistema ETL Incremental con Limpieza Automática
+PostgreSQL → Bronce (CSV) → Silver (CSV)
 
-Punto de entrada principal para ejecutar el pipeline ETL que extrae
-datos incrementales de PostgreSQL y los carga en MinIO.
-
-Uso:
+Ejecutar:
     python main.py
-    
-Para detener:
-    Ctrl+C
 """
 
+import datetime
+import time
+from typing import Optional
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-import datetime
+from etl.limpieza_bronce import LimpiezaBronce
 
-def main():
-    """
-    Función principal que inicializa y ejecuta el pipeline ETL.
+
+class ETLSystem:
+    """Sistema completo de ETL + Limpieza."""
     
-    Pasos:
-    1. Carga configuraciones de PostgreSQL y MinIO desde variables de entorno
-    2. Crea instancia del pipeline ETL con esas configuraciones
-    3. Ejecuta el pipeline en modo continuo (cada 10 segundos)
-    4. Maneja la interrupción del usuario (Ctrl+C)
-    """
-    print("=" * 60)
-    print("🚀 Iniciando Sistema ETL Incremental")
-    print("=" * 60)
+    def __init__(self, 
+                 db_config: Optional[DatabaseConfig] = None,
+                 minio_config: Optional[MinIOConfig] = None,
+                 extraction_interval: int = 300):
+        """
+        Inicializa sistema.
+        
+        Args:
+            db_config: Configuración de BD (crea si es None)
+            minio_config: Configuración de MinIO (crea si es None)
+            extraction_interval: Segundos entre extracciones
+        """
+        self.db_config = db_config or DatabaseConfig()
+        self.minio_config = minio_config or MinIOConfig()
+        self.extraction_interval = extraction_interval
+        self.pipeline = ETLPipeline(self.db_config, self.minio_config)
+        self.cleaner = LimpiezaBronce(self.minio_config)
     
-    # Cargar configuraciones desde variables de entorno
-    # DatabaseConfig lee: PG_DB, PG_USER, PG_PASS, PG_HOST
-    db_config = DatabaseConfig()
+    def display_config(self) -> None:
+        """Muestra configuración cargada."""
+        print("=" * 80)
+        print("INICIANDO SISTEMA ETL + LIMPIEZA AUTOMATICA")
+        print("=" * 80)
+        print(f"\n{self.db_config}")
+        print(f"{self.minio_config}")
+        print(f"[OK] Intervalo de extracción: {self.extraction_interval}s")
+        print("=" * 80)
     
-    # MinIOConfig lee: MINIO_ALIAS, MINIO_BUCKET
-    minio_config = MinIOConfig()
+    def run_cycle(self, cycle_num: int) -> bool:
+        """
+        Ejecuta un ciclo completo de ETL + limpieza.
+        
+        Args:
+            cycle_num: Número del ciclo
+            
+        Returns:
+            True si se completó exitosamente
+        """
+        print(f"\n--- CICLO {cycle_num}: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
+        
+        # 1. Extracción
+        self.pipeline.process_batch()
+        
+        # 2. Limpieza
+        print("\n[INFO] Iniciando limpieza automática...")
+        exito = self.cleaner.procesar_tabla('sensor_readings')
+        
+        if exito:
+            print("[OK] Limpieza completada: datos guardados en Silver")
+        else:
+            print("[AVISO] Limpieza no completada (probablemente sin datos nuevos)")
+        
+        return exito
     
-    # Mostrar configuración cargada
-    print(f"📊 Base de datos: {db_config.database}@{db_config.host}")
-    print(f"🗄️  MinIO Bucket: {minio_config.bucket}")
-    print("=" * 60)
+    def run_continuous(self) -> None:
+        """Ejecuta sistema continuamente."""
+        try:
+            self.display_config()
+            print("\n[INFO] Presione Ctrl+C para detener\n")
+            
+            cycle_num = 0
+            while True:
+                cycle_num += 1
+                self.run_cycle(cycle_num)
+                
+                print(f"\n[INFO] Esperando {self.extraction_interval}s...")
+                time.sleep(self.extraction_interval)
+        
+        except KeyboardInterrupt:
+            self._handle_shutdown()
     
-    # Crear instancia del pipeline con las configuraciones
-    pipeline = ETLPipeline(db_config, minio_config)
-    
-    try:
-        # Ejecutar en bucle infinito cada 10 segundos
-        # interval_seconds: tiempo de espera entre cada batch completo
-        pipeline.run_continuous(interval_seconds=10)
-    except KeyboardInterrupt:
-        # Capturar Ctrl+C para salida limpia
-        print("\n\n⏹️  Pipeline detenido por el usuario.")
-        print("👋 ¡Hasta luego!")
-    
+    def _handle_shutdown(self) -> None:
+        """Maneja apagado limpio."""
+        print("\n\n" + "=" * 80)
+        print("DETENIENDO SISTEMA")
+        print("=" * 80)
+        print("[INFO] Pipeline detenido por el usuario")
+        print("[INFO] Hasta luego!")
+
+
+def main() -> None:
+    """Función principal."""
+    system = ETLSystem(extraction_interval=300)
+    system.run_continuous()
+
+
 if __name__ == "__main__":
     main()
+
+

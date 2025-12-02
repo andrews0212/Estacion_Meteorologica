@@ -1,36 +1,30 @@
 import os
+from typing import Optional
+from .database_config import Config
 
 
-class MinIOConfig:
-    """
-    Configuración de MinIO (Object Storage compatible con S3).
+class MinIOConfig(Config):
+    """Configuración de MinIO (Object Storage S3-compatible)."""
     
-    MinIO se usa como capa bronze del Data Lake para almacenar
-    archivos Parquet extraídos de PostgreSQL.
-    
-    Variables de entorno requeridas:
-        - MINIO_ENDPOINT: URL del servidor MinIO (ej: localhost:9000)
-        - MINIO_ACCESS_KEY: Clave de acceso (ej: minioadmin)
-        - MINIO_SECRET_KEY: Clave secreta (ej: minioadmin)
-        - MINIO_BUCKET: Nombre del bucket donde se guardarán los archivos
-    """
-    
-    def __init__(self):
+    def __init__(self,
+                 endpoint: Optional[str] = None,
+                 access_key: Optional[str] = None,
+                 secret_key: Optional[str] = None,
+                 bucket: Optional[str] = None):
         """
-        Inicializa la configuración leyendo variables de entorno.
+        Inicializa configuración de MinIO.
         
-        Ejemplo de configuración en run_scheduler.ps1:
-            $env:MINIO_ENDPOINT = "localhost:9000"
-            $env:MINIO_ACCESS_KEY = "minioadmin"
-            $env:MINIO_SECRET_KEY = "minioadmin"
-            $env:MINIO_BUCKET = "meteo-bronze"
+        Lee de variables de entorno si no se proporcionan argumentos.
         """
-        # Endpoint del servidor MinIO
-        self.endpoint = os.environ.get('MINIO_ENDPOINT', 'localhost:9000')
-        
-        # Credenciales de acceso
-        self.access_key = os.environ.get('MINIO_ACCESS_KEY', 'minioadmin')
-        self.secret_key = os.environ.get('MINIO_SECRET_KEY', 'minioadmin')
-        
-        # Nombre del bucket donde se almacenarán los archivos Parquet
-        self.bucket = os.environ.get('MINIO_BUCKET', 'meteo-bronze')
+        self.endpoint = endpoint or self.get_env('MINIO_ENDPOINT', 'localhost:9000')
+        self.access_key = access_key or self.get_env('MINIO_ACCESS_KEY', 'minioadmin')
+        self.secret_key = secret_key or self.get_env('MINIO_SECRET_KEY', 'minioadmin')
+        self.bucket = bucket or self.get_env('MINIO_BUCKET', 'meteo-bronze')
+    
+    @property
+    def silver_bucket(self) -> str:
+        """Obtiene nombre del bucket Silver."""
+        return self.bucket.replace('-bronze', '-silver')
+    
+    def __repr__(self) -> str:
+        return f"MinIOConfig({self.endpoint}, bucket={self.bucket})"

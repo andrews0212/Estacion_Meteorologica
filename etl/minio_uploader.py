@@ -1,58 +1,41 @@
+"""Gestión de subida de archivos a MinIO."""
+
+from typing import Optional
 from minio import Minio
+from config import MinIOConfig
 
 
 class MinIOUploader:
-    """
-    Gestiona la subida de archivos a MinIO (Object Storage).
+    """Gestiona subida de archivos a MinIO."""
     
-    MinIO es compatible con S3 y se usa como Data Lake (capa bronze).
-    Usa la biblioteca de Python 'minio' para subir archivos directamente.
-    """
-    
-    def __init__(self, minio_config):
+    def __init__(self, minio_config: MinIOConfig):
         """
-        Inicializa el uploader.
+        Inicializa uploader.
         
         Args:
-            minio_config: Instancia de MinIOConfig con alias, bucket, endpoint, access_key, secret_key
+            minio_config: Configuración de MinIO
         """
         self.config = minio_config
-        
-        # Crear cliente MinIO
         self.client = Minio(
             minio_config.endpoint,
             access_key=minio_config.access_key,
             secret_key=minio_config.secret_key,
-            secure=False  # usar HTTP en lugar de HTTPS
+            secure=False
         )
     
-    def upload(self, local_path, table_name, file_name):
+    def upload(self, local_path: str, table_name: str, file_name: str) -> str:
         """
-        Sube archivo a MinIO usando el cliente Python.
+        Sube archivo a MinIO.
         
         Args:
-            local_path: Ruta local del archivo (ej: C:\\Users\\...\\AppData\\Local\\Temp\\movie_20251201231015.parquet)
-            table_name: Nombre de la tabla (se usa para crear carpeta en MinIO)
-            file_name: Nombre del archivo (ej: movie_20251201231015.parquet)
+            local_path: Ruta local del archivo
+            table_name: Nombre de la tabla
+            file_name: Nombre del archivo
             
         Returns:
-            str: Ruta completa en MinIO donde se subió el archivo
-            
-        Estructura de carpetas en MinIO:
-            meteo-bronze/movie/movie_20251201231015.parquet
-            meteo-bronze/person/person_20251201231015.parquet
-            
-        Raises:
-            Exception: Si hay error en la conexión o subida a MinIO
+            Ruta completa en MinIO
         """
-        # Construir ruta en MinIO: tabla/archivo
         object_name = f"{table_name}/{file_name}"
-        
-        # Subir archivo
-        self.client.fput_object(
-            self.config.bucket,
-            object_name,
-            local_path
-        )
-        
+        self.client.fput_object(self.config.bucket, object_name, local_path)
         return f"{self.config.bucket}/{object_name}"
+

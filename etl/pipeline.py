@@ -1,99 +1,94 @@
+"""Pipeline principal de ETL que coordina todo el sistema."""
+
 import time
+from typing import Optional
 from datetime import datetime
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, Connection
+from sqlalchemy.pool import QueuePool
 from .control_manager import ETLControlManager
 from .table_inspector import TableInspector
 from .table_processor import TableProcessor
+from config import DatabaseConfig, MinIOConfig
 
 
 class ETLPipeline:
-    """
-    Pipeline principal de ETL que coordina todo el sistema.
+    """Pipeline principal que coordina la extracción ETL."""
     
-    Responsabilidades:
-    - Crear conexión a PostgreSQL
-    - Procesar todas las tablas en cada batch
-    - Ejecutar continuamente con intervalos configurables
-    - Manejar errores de conexión
-    """
-    
-    def __init__(self, db_config, minio_config):
+    def __init__(self, db_config: DatabaseConfig, minio_config: MinIOConfig):
         """
-        Inicializa el pipeline ETL.
+        Inicializa pipeline ETL.
         
         Args:
-            db_config: Configuración de PostgreSQL (DatabaseConfig)
-            minio_config: Configuración de MinIO (MinIOConfig)
+            db_config: Configuración de PostgreSQL
+            minio_config: Configuración de MinIO
         """
         self.db_config = db_config
         self.minio_config = minio_config
-        
-        # Crear engine de SQLAlchemy para gestionar conexiones a PostgreSQL
-        # El engine maneja el pool de conexiones automáticamente
-        self.engine = create_engine(db_config.connection_url)
+        self.engine = self._create_engine()
     
-    def process_batch(self):
+    def _create_engine(self):
+        """Crea engine SQLAlchemy con pool de conexiones."""
+        return create_engine(
+            self.db_config.connection_url,
+            poolclass=QueuePool,
+            pool_size=5,
+            max_overflow=10
+        )
+    
+    def process_batch(self) -> int:
         """
         Procesa un batch completo de todas las tablas.
         
-        Un "batch" es una ejecución completa del ETL que procesa todas
-        las tablas de la base de datos en secuencia.
-        
-        Flujo:
-        1. Abrir conexión a PostgreSQL
-        2. Inicializar tabla etl_control
-        3. Obtener lista de todas las tablas
-        4. Procesar cada tabla individualmente
-        5. Mostrar resumen con total de registros procesados
-        6. Cerrar conexión
+        Returns:
+            Total de registros procesados
         """
         print(f"\n--- INICIO DE BATCH: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
         
         try:
-            # Abrir conexión dentro de un context manager (se cierra automáticamente)
             with self.engine.connect() as connection:
-                # Inicializar tabla de control (se crea si no existe)
-                control_manager = ETLControlManager(connection)
-                control_manager.initialize_table()
-                
-                # Obtener lista de todas las tablas del esquema 'public'
-                inspector = TableInspector(connection)
-                tables = inspector.get_all_tables()
-                
-                # Procesar cada tabla secuencialmente
-                total_records_batch = 0
-                for table_name in tables:
-                    # Crear procesador específico para esta tabla
-                    processor = TableProcessor(connection, table_name, control_manager, inspector, self.minio_config)
-                    
-                    # Procesar y acumular cantidad de registros
-                    total_records_batch += processor.process()
-                
-                # Mostrar resumen del batch completo
-                print(f"\n🎯 RESUMEN: {total_records_batch} registros nuevos en este batch.")
-        
+                return self._execute_batch(connection)
         except Exception as e:
-            # Capturar errores críticos (conexión a PostgreSQL caída, etc.)
             print(f"❌ ERROR CRÍTICO EN CONEXIÓN: {e}")
+            return 0
     
-    def run_continuous(self, interval_seconds=10):
+    def _execute_batch(self, connection: Connection) -> int:
         """
-        Ejecuta el ETL continuamente en un bucle infinito.
+        Ejecuta procesamiento de todas las tablas.
         
         Args:
-            interval_seconds: Tiempo de espera entre cada batch (en segundos)
+            connection: Conexión activa
             
-        El bucle se puede detener con Ctrl+C (KeyboardInterrupt).
-        
-        Ejemplo:
-            pipeline.run_continuous(interval_seconds=10)   # Cada 10 segundos
-            pipeline.run_continuous(interval_seconds=60)   # Cada 1 minuto
-            pipeline.run_continuous(interval_seconds=300)  # Cada 5 minutos
+        Returns:
+            Total de registros procesados
         """
-        while True:
-            # Procesar un batch completo
-            self.process_batch()
-            
-            # Esperar el intervalo especificado antes del siguiente batch
-            print(f"Esperando {interval_seconds} segundos...")
-            time.sleep(interval_seconds)
+        # Inicializar tabla de control
+        control_manager = ETLControlManager(connection)
+        control_manager.initialize_table()
+        
+        # Obtener tabla a procesar
+        inspector = TableInspector(connection)
+        tables = inspector.get_all_tables()
+        
+        total_records = 0
+        for table_name in tables:
+            processor = TableProcessor(connection, table_name, control_manager, inspector, self.minio_config)
+            total_records += processor.process()
+        
+        print(f"\n🎯 RESUMEN: {total_records} registros nuevos en este batch.")
+        return total_records
+    
+    def run_continuous(self, interval_seconds: int = 300) -> None:
+        """
+        Ejecuta pipeline continuamente.
+        
+        Args:
+            interval_seconds: Segundos entre batches
+        """
+        try:
+            while True:
+                self.process_batch()
+                print(f"Esperando {interval_seconds} segundos...")
+                time.sleep(interval_seconds)
+        except KeyboardInterrupt:
+            print("\n✓ Pipeline detenido")
+

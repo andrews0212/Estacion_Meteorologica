@@ -1,120 +1,119 @@
-from sqlalchemy import text
+"""Inspección de estructuras de tablas en PostgreSQL."""
+
+from typing import List, Tuple, Optional
+from sqlalchemy import Connection
+from .db_utils import DatabaseUtils, TableQueryBuilder
+
+
+class TrackingColumnDetector:
+    """Detecta automáticamente la mejor columna para rastreo."""
+    
+    # Prioridad 1: Columnas timestamp
+    TIMESTAMP_CANDIDATES = ['created_at', 'updated_at', 'timestamp', 'fecha_registro', 'last_update']
+    
+    @staticmethod
+    def is_numeric_type(col_type: str) -> bool:
+        """Verifica si tipo es numérico."""
+        return any(t in col_type.lower() for t in ['int', 'serial', 'numeric'])
+    
+    @staticmethod
+    def is_timestamp_type(col_type: str) -> bool:
+        """Verifica si tipo es timestamp."""
+        return 'timestamp' in col_type.lower()
+    
+    @staticmethod
+    def detect(columns: List[Tuple[str, str]], 
+               connection: Connection,
+               table_name: str) -> Optional[Tuple[str, str]]:
+        """
+        Detecta mejor columna para rastreo.
+        
+        Prioridades:
+        1. Timestamp (created_at, updated_at, etc.)
+        2. PRIMARY KEY numérico
+        3. Columna 'id' numérica
+        
+        Returns:
+            (column_name, column_type) o None
+        """
+        # 1. Buscar timestamp
+        for col_name, col_type in columns:
+            if (col_name.lower() in TrackingColumnDetector.TIMESTAMP_CANDIDATES or
+                TrackingColumnDetector.is_timestamp_type(col_type)):
+                return col_name, 'timestamp'
+        
+        # 2. Buscar PRIMARY KEY numérico
+        pk_col = TrackingColumnDetector._get_primary_key(connection, table_name)
+        if pk_col:
+            for col_name, col_type in columns:
+                if col_name == pk_col and TrackingColumnDetector.is_numeric_type(col_type):
+                    return col_name, 'id'
+        
+        # 3. Buscar 'id'
+        for col_name, col_type in columns:
+            if col_name.lower() == 'id' and TrackingColumnDetector.is_numeric_type(col_type):
+                return col_name, 'id'
+        
+        return None
+    
+    @staticmethod
+    def _get_primary_key(connection: Connection, table_name: str) -> Optional[str]:
+        """Obtiene nombre de PRIMARY KEY."""
+        result = DatabaseUtils.fetch_one(
+            connection,
+            *TableQueryBuilder.get_primary_key_query(table_name)
+        )
+        return result[0] if result else None
 
 
 class TableInspector:
-    """
-    Inspecciona la estructura de las tablas de PostgreSQL.
+    """Inspecciona estructura de tablas PostgreSQL."""
     
-    Se encarga de:
-    - Listar todas las tablas disponibles
-    - Obtener columnas y tipos de datos de cada tabla
-    - Detectar automáticamente la mejor columna para rastreo incremental
-    """
-    
-    def __init__(self, connection):
+    def __init__(self, connection: Connection):
         """
-        Inicializa el inspector.
+        Inicializa inspector.
         
         Args:
-            connection: Conexión activa a PostgreSQL
+            connection: Conexión a PostgreSQL
         """
         self.connection = connection
     
-    def get_all_tables(self):
+    def get_all_tables(self) -> List[str]:
         """
-        Obtiene lista de todas las tablas del esquema 'public'.
+        Obtiene lista de todas las tablas.
         
-        Excluye la tabla 'etl_control' que es solo para uso interno del sistema.
+        Excluye tabla 'etl_control'.
         
         Returns:
-            list: Lista con nombres de las tablas
-            
-        Ejemplo:
-            ['movie', 'person', 'genre', 'keyword', ...]
+            Lista de nombres de tablas
         """
-        tables = self.connection.execute(text(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE'"
-        )).fetchall()
+        tables = DatabaseUtils.fetch_all(
+            self.connection,
+            TableQueryBuilder.get_list_tables_query()
+        )
         return [t[0] for t in tables if t[0] != 'etl_control']
     
-    def get_columns(self, table_name):
+    def get_columns(self, table_name: str) -> List[Tuple[str, str]]:
         """
-        Obtiene columnas de una tabla con sus tipos de datos.
+        Obtiene columnas con tipos de datos.
         
         Args:
-            table_name: Nombre de la tabla a inspeccionar
+            table_name: Nombre de la tabla
             
         Returns:
-            list: Lista de tuplas (column_name, data_type)
-            
-        Ejemplo:
-            [('movie_id', 'integer'), ('title', 'character varying'), ...]
+            Lista de (column_name, data_type)
         """
-        query = text("""
-            SELECT column_name, data_type 
-            FROM information_schema.columns 
-            WHERE table_name = :table_name 
-            AND table_schema = 'public'
-            ORDER BY ordinal_position
-        """)
-        return self.connection.execute(query, {"table_name": table_name}).fetchall()
+        query, params = TableQueryBuilder.get_columns_query(table_name)
+        return DatabaseUtils.fetch_all(self.connection, query, params)
     
-    def detect_tracking_column(self, table_name):
+    def detect_tracking_column(self, table_name: str) -> Tuple[Optional[str], Optional[str]]:
         """
-        Detecta automáticamente la mejor columna para rastreo incremental.
+        Detecta mejor columna para rastreo.
         
-        Estrategia de detección (en orden de prioridad):
-        1. Columnas timestamp (created_at, updated_at, timestamp, etc.)
-        2. PRIMARY KEY numérico (int, serial, numeric)
-        3. Columna genérica 'id' (int, serial)
-        
-        Args:
-            table_name: Nombre de la tabla a analizar
-            
         Returns:
-            tuple: (column_name, column_type) donde column_type es 'timestamp' o 'id'
-                   o (None, None) si no encuentra columna válida
-                   
-        Ejemplo:
-            detect_tracking_column('movie')
-            # Retorna: ('movie_id', 'id') si movie_id es PRIMARY KEY
-            # Retorna: ('created_at', 'timestamp') si tiene esa columna
-            # Retorna: (None, None) si no hay columna válida
+            (column_name, column_type) o (None, None)
         """
         columns = self.get_columns(table_name)
-        
-        # 1. PRIORIDAD 1: Buscar columnas timestamp
-        # Estas son ideales porque registran cuándo se creó o modificó cada registro
-        timestamp_candidates = ['created_at', 'updated_at', 'timestamp', 'fecha_registro', 'last_update']
-        for col_name, col_type in columns:
-            if col_name.lower() in timestamp_candidates or 'timestamp' in col_type.lower():
-                return col_name, 'timestamp'
-        
-        # 2. PRIORIDAD 2: Buscar PRIMARY KEY numérico
-        # Consulta metadatos de PostgreSQL para encontrar la PRIMARY KEY
-        pk_query = text("""
-            SELECT ccu.column_name
-            FROM information_schema.table_constraints tc 
-            JOIN information_schema.constraint_column_usage ccu 
-              ON tc.constraint_name = ccu.constraint_name 
-            WHERE tc.constraint_type = 'PRIMARY KEY' 
-              AND tc.table_name = :table_name
-            LIMIT 1
-        """)
-        pk_result = self.connection.execute(pk_query, {"table_name": table_name}).fetchone()
-        
-        if pk_result:
-            pk_col = pk_result[0]
-            # Verificar que la PRIMARY KEY sea numérica (int, serial, numeric)
-            for col_name, col_type in columns:
-                if col_name == pk_col and ('int' in col_type.lower() or 'serial' in col_type.lower() or 'numeric' in col_type.lower()):
-                    return pk_col, 'id'
+        result = TrackingColumnDetector.detect(columns, self.connection, table_name)
+        return result if result else (None, None)
 
-        # 3. PRIORIDAD 3: Buscar columna genérica 'id'
-        # Como último recurso, si hay una columna llamada 'id'
-        for col_name, col_type in columns:
-            if col_name.lower() == 'id' and ('int' in col_type.lower() or 'serial' in col_type.lower()):
-                return col_name, 'id'
-        
-        # No se encontró ninguna columna válida para rastreo        
-        return None, None

@@ -1,30 +1,33 @@
+"""Procesamiento de tablas individuales con extracción incremental."""
+
+from typing import Optional
+from sqlalchemy import Connection
+import pandas as pd
 from .data_extractor import DataExtractor
-from .parquet_writer import ParquetWriter
+from .parquet_writer import DataWriter
 from .minio_uploader import MinIOUploader
+from .control_manager import ETLControlManager
+from .table_inspector import TableInspector
+from config import MinIOConfig
 
 
 class TableProcessor:
-    """
-    Procesa una tabla individual con extracción incremental.
+    """Procesa una tabla individual con extracción incremental."""
     
-    Orquesta todo el flujo ETL para una tabla:
-    1. Detectar columna de rastreo
-    2. Obtener último valor procesado
-    3. Extraer datos nuevos
-    4. Guardar en Parquet
-    5. Subir a MinIO
-    6. Actualizar control
-    """
-    
-    def __init__(self, connection, table_name, control_manager, inspector, minio_config):
+    def __init__(self,
+                 connection: Connection,
+                 table_name: str,
+                 control_manager: ETLControlManager,
+                 inspector: TableInspector,
+                 minio_config: MinIOConfig):
         """
-        Inicializa el procesador de tabla.
+        Inicializa procesador de tabla.
         
         Args:
             connection: Conexión a PostgreSQL
-            table_name: Nombre de la tabla a procesar
-            control_manager: Instancia de ETLControlManager
-            inspector: Instancia de TableInspector
+            table_name: Nombre de la tabla
+            control_manager: Gestor de control ETL
+            inspector: Inspector de tablas
             minio_config: Configuración de MinIO
         """
         self.connection = connection
@@ -33,76 +36,79 @@ class TableProcessor:
         self.inspector = inspector
         self.minio_config = minio_config
     
-    def process(self):
+    def process(self) -> int:
         """
-        Procesa la tabla completa con extracción incremental.
-        
-        Flujo completo:
-        1. Detectar columna para rastreo (timestamp o PRIMARY KEY)
-        2. Si no hay columna válida, OMITIR la tabla
-        3. Consultar último valor procesado en etl_control
-        4. Extraer solo datos nuevos desde ese valor
-        5. Si no hay datos nuevos, OMITIR procesamiento
-        6. Guardar datos en archivo Parquet temporal
-        7. Subir Parquet a MinIO
-        8. Actualizar etl_control con nuevo último valor
-        9. Limpiar archivo temporal
+        Procesa tabla completa con extracción incremental.
         
         Returns:
-            int: Cantidad de registros procesados (0 si no hay datos nuevos o si se omitió)
+            Cantidad de registros procesados
         """
         print(f"\nProcesando tabla: {self.table_name}")
         
-        # PASO 1: Detectar columna de rastreo (timestamp o PRIMARY KEY)
+        # 1. Detectar columna de rastreo
         tracking_column, tracking_type = self.inspector.detect_tracking_column(self.table_name)
-        
         if not tracking_column:
-            # Sin columna de rastreo, no se puede hacer extracción incremental
-            # IMPORTANTE: Se omite la tabla en lugar de extraer todo cada vez
-            print(f"⚠️  SKIPPING: No se detectó columna incremental (ID numérico o Timestamp).")
-            cols = self.inspector.get_columns(self.table_name)
-            col_names = [f"{c[0]}({c[1]})" for c in cols]
-            print(f"   🔎 Columnas disponibles: {', '.join(col_names)}")
-            return 0
+            return self._handle_no_tracking_column()
         
-        # PASO 2: Obtener último valor procesado de etl_control
+        # 2. Obtener último valor procesado
         last_value, stored_column = self.control_manager.get_last_extracted_value(self.table_name)
-        
-        # Si cambió la columna de rastreo, reiniciar extracción (carga inicial)
         if stored_column and stored_column != tracking_column:
             last_value = None
         
-        # PASO 3: Extraer datos nuevos desde last_value
+        # 3. Extraer datos nuevos
         extractor = DataExtractor(self.connection, self.table_name, tracking_column, tracking_type)
         df = extractor.extract_incremental(last_value)
         
-        # Si no hay datos nuevos, terminar aquí
+        # 4. Procesar si hay datos
         if df.empty:
             print("   ✓ No hay datos nuevos.")
             return 0
         
+        return self._process_extracted_data(df, tracking_column)
+    
+    def _handle_no_tracking_column(self) -> int:
+        """Maneja caso sin columna de rastreo."""
+        print(f"⚠️  SKIPPING: No se detectó columna incremental.")
+        cols = self.inspector.get_columns(self.table_name)
+        col_names = [f"{c[0]}({c[1]})" for c in cols]
+        print(f"   🔎 Columnas disponibles: {', '.join(col_names)}")
+        return 0
+    
+    def _process_extracted_data(self, df: pd.DataFrame, tracking_column: str) -> int:
+        """
+        Procesa datos extraídos.
+        
+        Args:
+            df: DataFrame extraído
+            tracking_column: Columna de rastreo
+            
+        Returns:
+            Cantidad de registros procesados
+        """
         count = len(df)
         print(f"   📦 Registros nuevos: {count}")
         
-        # PASO 4: Guardar en Parquet temporal
-        writer = ParquetWriter(self.table_name)
+        # Guardar en archivo temporal
+        writer = DataWriter(self.table_name)
         local_path = writer.write(df)
         
-        # PASO 5: Subir a MinIO
+        # Subir a MinIO
         uploader = MinIOUploader(self.minio_config)
         try:
             uploader.upload(local_path, self.table_name, writer.file_name)
             print(f"   ✅ Subido a MinIO: {writer.file_name}")
             
-            # PASO 6: Actualizar control con el valor máximo extraído
+            # Actualizar control
             max_val = df[tracking_column].max()
-            self.control_manager.update_last_extracted_value(self.table_name, max_val, tracking_column)
-            
+            self.control_manager.update_last_extracted_value(
+                self.table_name,
+                max_val,
+                tracking_column
+            )
         except Exception as e:
-            # Si falla la subida a MinIO, mostrar error
             print(f"   ❌ Error subiendo a MinIO: {e}")
         finally:
-            # PASO 7: Siempre limpiar archivo temporal (exito o error)
             writer.cleanup()
         
         return count
+
