@@ -1,31 +1,31 @@
 import os
 import tempfile
+import pandas as pd
 from datetime import datetime
 
 
-class ParquetWriter:
+class DataWriter:
     """
-    Gestiona la escritura de archivos Parquet.
+    Gestiona la escritura de archivos en formato CSV (sin problemas de nanosegundos).
     
-    Parquet es un formato columnar comprimido ideal para Data Lakes.
-    Ventajas:
-    - Compresión eficiente (ocupa menos espacio que CSV)
-    - Lectura rápida de columnas específicas
-    - Preserva tipos de datos
-    - Compatible con herramientas Big Data (Spark, Hive, etc.)
+    CSV es ideal para la capa Bronce porque:
+    - Los timestamps se guardan como strings (sin problemas de nanosegundos)
+    - Compatible con PySpark, Pandas y cualquier herramienta
+    - Fácil de inspeccionar manualmente
+    - Sin compresión Java (evita problemas de compatibilidad)
     """
     
     def __init__(self, table_name):
         """
-        Inicializa el escritor de Parquet.
+        Inicializa el escritor de datos.
         
         Args:
             table_name: Nombre de la tabla (se usa para nombrar el archivo)
             
         Genera automáticamente:
         - Timestamp actual para el nombre del archivo
-        - Nombre de archivo con patrón: {tabla}_{timestamp}.parquet
-        - Ruta temporal (multiplataforma: /tmp en Linux, AppData\\Temp en Windows)
+        - Nombre de archivo con patrón: {tabla}_bronce_{timestamp}.csv
+        - Ruta temporal (multiplataforma)
         """
         self.table_name = table_name
         
@@ -33,17 +33,16 @@ class ParquetWriter:
         # Formato: 20251201231015 (AñoMesDíaHoraMinutoSegundo)
         self.timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         
-        # Nombre del archivo: movie_20251201231015.parquet
-        self.file_name = f"{table_name}_{self.timestamp}.parquet"
+        # Nombre del archivo con identificador "bronce"
+        self.file_name = f"{table_name}_bronce_{self.timestamp}.csv"
         
         # Guardar temporalmente en la carpeta temp del SO (multiplataforma)
-        # En Linux: /tmp/, en Windows: C:\Users\...\AppData\Local\Temp\
         temp_dir = tempfile.gettempdir()
         self.local_path = os.path.join(temp_dir, self.file_name)
     
     def write(self, dataframe):
         """
-        Guarda DataFrame de pandas en formato Parquet.
+        Guarda DataFrame de pandas en formato CSV.
         
         Args:
             dataframe: DataFrame de pandas con los datos extraídos
@@ -53,14 +52,15 @@ class ParquetWriter:
             
         El archivo se guarda con:
         - index=False: No guarda el índice de pandas como columna
-        - Compresión por defecto (Snappy)
+        - Timestamps como strings (sin problema de nanosegundos para PySpark)
         
         Ejemplo:
-            writer = ParquetWriter('movie')
+            writer = DataWriter('sensor_readings')
             writer.write(df)
-            # Crea: /tmp/movie_20251201231015.parquet
+            # Crea: /tmp/sensor_readings_bronce_20251202091819.csv
         """
-        dataframe.to_parquet(self.local_path, index=False)
+        # Guardar como CSV (timestamps se convierten automáticamente a strings)
+        dataframe.to_csv(self.local_path, index=False)
         return self.local_path
     
     def cleanup(self):
@@ -68,7 +68,10 @@ class ParquetWriter:
         Elimina el archivo temporal.
         
         Se llama después de subir exitosamente a MinIO para liberar espacio.
-        Es importante limpiar archivos temporales para evitar llenar el disco.
         """
         if os.path.exists(self.local_path):
             os.remove(self.local_path)
+
+
+# Mantener alias para compatibilidad con código antiguo
+ParquetWriter = DataWriter

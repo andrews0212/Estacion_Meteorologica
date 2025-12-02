@@ -14,7 +14,7 @@ Para detener:
 
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-
+import datetime
 
 def main():
     """
@@ -53,7 +53,6 @@ def main():
         # Capturar Ctrl+C para salida limpia
         print("\n\n⏹️  Pipeline detenido por el usuario.")
         print("👋 ¡Hasta luego!")
-
-
+    
 if __name__ == "__main__":
     main()
