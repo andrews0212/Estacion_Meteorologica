@@ -2,56 +2,45 @@
 
 import os
 import sys
-import tempfile
-import csv
 from pathlib import Path
-
-# Add parent to path for imports
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from minio import Minio
-import pandas as pd
 import warnings
 warnings.filterwarnings("ignore")
 
-# MinIO Configuration
-MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "localhost:9000")
-MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
-MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin")
-MINIO_BUCKET_BRONCE = os.environ.get("MINIO_BUCKET", "meteo-bronze")
-MINIO_BUCKET_SILVER = "meteo-silver"
+# Add parent to path for imports
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from config.minio_config import MinIOConfig
+from etl.utils.minio_utils import MinIOUtils
 
 def run_silver_layer():
     """Execute Silver layer cleaning using pandas (no PySpark)."""
-    minio_client = Minio(MINIO_ENDPOINT, access_key=MINIO_ACCESS_KEY, secret_key=MINIO_SECRET_KEY, secure=False)
+    # Load MinIO configuration from config module
+    config = MinIOConfig()
+    minio = MinIOUtils(config.endpoint, config.access_key, config.secret_key)
+    
+    # Get bucket names
+    bucket_bronze = config.bucket
+    bucket_silver = config.silver_bucket
     
     # Create meteo-silver bucket if not exists
-    try:
-        minio_client.make_bucket(MINIO_BUCKET_SILVER)
-        print(f'✅ Bucket {MINIO_BUCKET_SILVER} creado')
-    except:
-        print(f'✅ Bucket {MINIO_BUCKET_SILVER} ya existe')
+    minio.crear_bucket_si_no_existe(bucket_silver)
     
     # Load latest Bronce CSV
-    archivo_reciente = None
-    try:
-        objects = list(minio_client.list_objects(MINIO_BUCKET_BRONCE, recursive=True))
-        archivos_csv = [obj.object_name for obj in objects if obj.object_name.endswith('.csv')]
-        if archivos_csv:
-            archivo_reciente = sorted(archivos_csv)[-1]
-            temp_dir = tempfile.gettempdir()
-            temp_file = os.path.join(temp_dir, 'bronce_temp.csv')
-            minio_client.fget_object(MINIO_BUCKET_BRONCE, archivo_reciente, temp_file)
-            
-            # Use pandas instead of PySpark
-            df = pd.read_csv(temp_file)
-            print(f'✅ Cargados {len(df)} registros desde {archivo_reciente}')
-        else:
-            print('⚠️ No hay archivos en Bronce')
-            df = pd.DataFrame()
-    except Exception as e:
-        print(f'⚠️ Error: {e}')
+    archivo_reciente = minio.obtener_archivo_reciente_csv(bucket_bronze)
+    
+    if not archivo_reciente:
+        print('⚠️ No hay archivos en Bronce')
         return False
+    
+    # Descargar archivo
+    df = minio.descargar_csv(bucket_bronze, archivo_reciente)
+    
+    if df is None or df.empty:
+        print('⚠️ No se pudo descargar archivo de Bronce')
+        return False
+    
+    print(f'✅ Cargados {len(df)} registros desde {archivo_reciente}')
     
     # Clean data: drop unwanted columns
     drop_cols = ['pressure', 'uv_level', 'pm25', 'rain_raw', 'wind_raw', 'vibration', 'light']
@@ -65,20 +54,16 @@ def run_silver_layer():
     print(f'✅ {len(df)} registros limpios')
     
     # Write to Silver bucket - UPDATE existing file or create with standard name
-    tabla = archivo_reciente.split('_bronce_')[0] if archivo_reciente and '_bronce_' in archivo_reciente else 'datos'
+    tabla = archivo_reciente.split('_bronce_')[0] if '_bronce_' in archivo_reciente else 'datos'
     archivo_silver = f'{tabla}_silver.csv'  # Standard name without timestamp
     
     try:
-        temp_file_local = os.path.join(tempfile.gettempdir(), archivo_silver)
-        
-        # Write using pandas with proper CSV format
-        df.to_csv(temp_file_local, index=False, encoding='utf-8')
-        
-        # Upload to MinIO - will overwrite if exists
-        minio_client.fput_object(MINIO_BUCKET_SILVER, archivo_silver, temp_file_local)
-        print(f'✅ {archivo_silver} actualizado en Silver')
-        os.remove(temp_file_local)
-        return True
+        if minio.subir_dataframe(bucket_silver, archivo_silver, df):
+            print(f'✅ {archivo_silver} actualizado en Silver')
+            return True
+        else:
+            print(f'❌ Error subiendo archivo a Silver')
+            return False
     except Exception as e:
         print(f'❌ Error: {e}')
         import traceback

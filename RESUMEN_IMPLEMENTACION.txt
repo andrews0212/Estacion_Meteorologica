@@ -1,0 +1,248 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                                                                                ║
+║                 ✅ PIPELINE ETL + POWER BI - IMPLEMENTACIÓN                   ║
+║                           COMPLETADA Y VALIDADA                               ║
+║                                                                                ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+📋 RESUMEN DE CAMBIOS
+═════════════════════════════════════════════════════════════════════════════════
+
+✨ NUEVA FUNCIONALIDAD: Descarga Automática Gold para Power BI
+
+En cada ciclo del pipeline, el archivo Gold se descarga automáticamente a:
+    📁 file/metricas_kpi_gold.csv
+
+Esto permite que Power BI tenga **acceso en tiempo real** a los últimos KPIs
+sin necesidad de descargar manualmente el archivo.
+
+
+🔄 FLUJO COMPLETO
+═════════════════════════════════════════════════════════════════════════════════
+
+    CICLO 1: 14:00:00
+    ├─ Extracción: PostgreSQL → Bronze (MinIO)
+    ├─ Limpieza: Bronze → Silver (MinIO)
+    ├─ KPIs: Silver → Gold (MinIO)
+    └─ 📥 DESCARGA: Gold → file/metricas_kpi_gold.csv ✅
+    
+    ⏳ ESPERA: 5 minutos
+    
+    CICLO 2: 14:05:00
+    ├─ Extracción: PostgreSQL → Bronze (MinIO)
+    ├─ Limpieza: Bronze → Silver (MinIO)
+    ├─ KPIs: Silver → Gold (MinIO)
+    └─ 📥 DESCARGA: Gold → file/metricas_kpi_gold.csv ✅ (ACTUALIZADO)
+    
+    ⏳ ESPERA: 5 minutos
+    
+    ...repetir indefinidamente
+
+
+🚀 COMANDOS RÁPIDOS
+═════════════════════════════════════════════════════════════════════════════════
+
+# Opción 1: Pipeline Principal (RECOMENDADO)
+> python main.py
+  Ejecuta ciclos continuos cada 5 minutos con descarga automática
+
+# Opción 2: Test Rápido
+> python test_pipeline.py -c 1
+  Ejecuta 1 ciclo para validar todo el pipeline
+
+# Opción 3: Monitoreo en Tiempo Real
+> python monitor_powerbi.py --interval 5
+  Verifica cambios en el archivo cada 5 segundos
+
+# Opción 4: Descarga Manual
+> python descargar_gold.py
+  Descarga el archivo Gold manualmente (sin ejecutar ciclo)
+
+# Opción 5: Quick Start (PowerShell)
+> .\quickstart.ps1 run
+  Ejecuta pipeline con interfaz amigable
+
+
+📊 ARCHIVOS IMPORTANTES
+═════════════════════════════════════════════════════════════════════════════════
+
+main.py                         ← 🚀 EJECUTA AQUÍ (Pipeline Principal)
+test_pipeline.py                ← Validar todo el pipeline
+monitor_powerbi.py              ← Monitorear cambios en tiempo real
+descargar_gold.py               ← Descarga manual
+quickstart.ps1                  ← Interface rápida (PowerShell)
+
+config/minio_config.py          ← [MODIFICADO] Agregado atributo 'secure'
+
+file/                           ← 📊 TU CARPETA POWER BI
+  └── metricas_kpi_gold.csv     ← CSV que se actualiza en cada ciclo
+
+
+📈 CÓMO USAR CON POWER BI
+═════════════════════════════════════════════════════════════════════════════════
+
+1. Ejecutar Pipeline:
+   cd C:\Users\Alumno_AI\Desktop\Estacion_Meteorologica
+   python main.py
+   
+2. En otra terminal, monitorear:
+   python monitor_powerbi.py --interval 5
+   
+3. Abrir Power BI Desktop:
+   - Home → Get Data → Text/CSV
+   - Seleccionar: C:\...\Estacion_Meteorologica\file\metricas_kpi_gold.csv
+   - Load
+   
+4. Crear visualizaciones:
+   - Usa columnas: temp_avg, temp_max, hum_avg, hum_max, etc.
+   - Crea gráficos de tendencias, comparativas, etc.
+
+5. (Opcional) Configurar refresh automático:
+   - En Power BI: File → Options → Data Load
+   - Enable auto-refresh a intervalo deseado
+
+
+✅ VALIDACIÓN COMPLETADA
+═════════════════════════════════════════════════════════════════════════════════
+
+✓ Pipeline extrae datos de PostgreSQL
+✓ Limpieza Silver ejecuta sin errores
+✓ Generación de KPIs completada
+✓ Descarga automática a file/ funcionando
+✓ Test de 1 ciclo completado exitosamente
+✓ Monitor detecta cambios correctamente
+✓ Config MinIO actualizada con 'secure'
+✓ Documentación completa disponible
+
+
+📋 ESTRUCTURA DEL CSV GOLD
+═════════════════════════════════════════════════════════════════════════════════
+
+Columnas (9 total):
+  id           → ID del sensor (1-5)
+  lecturas     → Cantidad total de lecturas
+  temp_avg     → Temperatura promedio (°C)
+  temp_max     → Temperatura máxima (°C)
+  temp_min     → Temperatura mínima (°C)
+  temp_std     → Desviación estándar de temperatura
+  hum_avg      → Humedad promedio (%)
+  hum_max      → Humedad máxima (%)
+  hum_min      → Humedad mínima (%)
+
+Ejemplo de datos:
+  id,lecturas,temp_avg,temp_max,temp_min,temp_std,hum_avg,hum_max,hum_min
+  1,97,25.4,28.5,22.1,1.23,45.2,65.0,30.5
+  2,97,24.8,27.2,21.9,1.15,46.1,64.5,31.2
+  3,97,25.1,28.0,22.5,1.18,44.9,63.8,32.0
+  4,97,25.0,27.5,22.0,1.10,45.5,64.2,31.8
+  5,97,25.3,28.2,22.3,1.20,44.8,63.5,32.2
+
+
+🎯 PRÓXIMOS PASOS
+═════════════════════════════════════════════════════════════════════════════════
+
+Corto plazo (Hoy):
+  1. Ejecutar: python main.py
+  2. Monitorear: python monitor_powerbi.py
+  3. Abrir Power BI Desktop
+  4. Importar: file/metricas_kpi_gold.csv
+  5. Crear primeras visualizaciones
+
+Mediano plazo:
+  1. Crear dashboard completo en Power BI
+  2. Configurar refresh automático
+  3. Publicar en Power BI Service (opcional)
+
+Largo plazo:
+  1. Agregar más métricas si es necesario
+  2. Optimizar intervalo entre ciclos según carga
+  3. Crear alertas en Power BI para anomalías
+
+
+⚙️ CONFIGURACIÓN RECOMENDADA
+═════════════════════════════════════════════════════════════════════════════════
+
+Intervalo entre ciclos: 300 segundos (5 minutos)
+  - Equilibra actualización frecuente con carga del sistema
+  - Perfecta para análisis casi en tiempo real
+  - Puede ajustarse en main.py
+
+Monitor de cambios: Cada 10 segundos
+  - Verifica regularmente si hay actualizaciones
+  - Sin sobrecargar el sistema
+
+Power BI Refresh: Configurable en el software
+  - Puede ser igual al intervalo de ciclos (5 minutos)
+  - O menos frecuente si prefieres ahorrar recursos
+
+
+🔧 TROUBLESHOOTING RÁPIDO
+═════════════════════════════════════════════════════════════════════════════════
+
+Problema: "Error connecting to MinIO"
+→ Verifica que MinIO está corriendo: http://localhost:9000
+
+Problema: "File not found: file/metricas_kpi_gold.csv"
+→ Asegúrate de que ejecutaste al menos 1 ciclo completo
+
+Problema: "Power BI no ve actualizaciones"
+→ Ejecuta: python monitor_powerbi.py para verificar que se descarga
+→ Recarga el dataset en Power BI (Refresh)
+
+Problema: "ModuleNotFoundError: No module named 'minio'"
+→ Pip install minio
+
+Problema: "PySpark timeout"
+→ Aumenta el timeout en main.py o reinicia MinIO
+
+
+📚 DOCUMENTACIÓN
+═════════════════════════════════════════════════════════════════════════════════
+
+Guía Completa:
+  → GUIA_PIPELINE_POWERBI.md
+    Instrucciones detalladas, configuración avanzada, troubleshooting
+
+Cambios Realizados:
+  → CAMBIOS_DESCARGA_POWERBI.md
+    Resumen técnico de modificaciones y nuevos archivos
+
+Markdown existentes:
+  → DOCUMENTACION.md
+  → ANALISIS_LIMPIEZA_CODIGO.md
+  → ESTADO_FINAL_LIMPIEZA.md
+
+
+✨ VENTAJAS DE ESTA IMPLEMENTACIÓN
+═════════════════════════════════════════════════════════════════════════════════
+
+✓ Totalmente Automática
+  - No requiere intervención manual
+  - Descarga se ejecuta en cada ciclo
+
+✓ Tiempo Real
+  - Power BI siempre tiene datos actualizados
+  - Análisis casi inmediato
+
+✓ Monitoreable
+  - Script monitor_powerbi.py detecta cambios
+  - Sabes exactamente cuándo se actualiza
+
+✓ Testeable
+  - Script test_pipeline.py valida todo
+  - Confianza en la pipeline
+
+✓ Documentada
+  - Guías completas incluidas
+  - Troubleshooting disponible
+
+
+════════════════════════════════════════════════════════════════════════════════
+                              ¡LISTO PARA USAR!
+════════════════════════════════════════════════════════════════════════════════
+
+Comando para empezar AHORA:
+
+    python main.py
+
+Enjoy! 🚀📊

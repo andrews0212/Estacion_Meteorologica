@@ -19,6 +19,8 @@ import datetime
 import time
 import subprocess
 from typing import Optional
+from pathlib import Path
+from minio import Minio
 
 # Configurar UTF-8 en Windows
 if sys.platform == 'win32':
@@ -27,7 +29,6 @@ if sys.platform == 'win32':
     sys.stdout.reconfigure(encoding='utf-8')
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-from pathlib import Path
 
 
 class ETLSystem:
@@ -74,7 +75,7 @@ class ETLSystem:
     
     def run_cycle(self, cycle_num: int) -> bool:
         """
-        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza Silver + KPI Gold.
+        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza Silver + KPI Gold + Descarga.
         
         Args:
             cycle_num: Número del ciclo
@@ -92,6 +93,9 @@ class ETLSystem:
         
         # Generación de KPIs (Gold)
         self._run_notebook_kpi()
+        
+        # Descargar Gold a carpeta file/ para Power BI
+        self._download_gold_for_powerbi()
         
         return True
     
@@ -159,6 +163,43 @@ class ETLSystem:
             return False
         except Exception as e:
             print(f"[ERROR] Error ejecutando Gold: {e}")
+            return False
+    
+    def _download_gold_for_powerbi(self) -> bool:
+        """
+        Descarga el archivo CSV de Gold desde MinIO a la carpeta file/ para Power BI.
+        Se ejecuta después de cada ciclo para análisis en tiempo real.
+        
+        Returns:
+            True si se descargó exitosamente
+        """
+        print(f"\n[INFO] Descargando Gold CSV para Power BI...")
+        
+        try:
+            # Crear cliente MinIO
+            client = Minio(
+                self.minio_config.endpoint,
+                access_key=self.minio_config.access_key,
+                secret_key=self.minio_config.secret_key,
+                secure=self.minio_config.secure
+            )
+            
+            # Crear carpeta file/ si no existe
+            file_dir = Path(__file__).parent / "file"
+            file_dir.mkdir(exist_ok=True)
+            
+            # Descargar archivo
+            bucket = "meteo-gold"
+            object_name = "metricas_kpi_gold.csv"
+            local_path = file_dir / object_name
+            
+            client.fget_object(bucket, object_name, str(local_path))
+            
+            print(f"[OK] Gold CSV descargado a: {local_path}")
+            return True
+            
+        except Exception as e:
+            print(f"[AVISO] Error descargando Gold CSV: {e}")
             return False
     
     def run_continuous(self) -> None:

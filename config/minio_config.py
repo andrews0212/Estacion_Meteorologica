@@ -20,6 +20,7 @@ class MinIOConfig(Config):
         self.access_key = access_key or self.get_env('MINIO_ACCESS_KEY', 'minioadmin')
         self.secret_key = secret_key or self.get_env('MINIO_SECRET_KEY', 'minioadmin')
         self.bucket = bucket or self.get_env('MINIO_BUCKET', 'meteo-bronze')
+        self.secure = self.get_env('MINIO_SECURE', 'false').lower() == 'true'
     
     @property
     def silver_bucket(self) -> str:
