@@ -1,11 +1,11 @@
 """Paquete de control y gestión de estado ETL.
 
 Módulos para rastreo y sincronización del estado del pipeline:
-- control_manager: Gestor de tabla de control (etl_control)
+- control_manager: Gestor de estado usando archivo JSON (.etl_state.json)
 """
 
-from .control_manager import ETLControlManager
+from .control_manager import ExtractionStateManager
 
 __all__ = [
-    'ETLControlManager',
+    'ExtractionStateManager',
 ]

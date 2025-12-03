@@ -1,19 +1,614 @@
-# 🌤️ Sistema ETL Incremental PostgreSQL → MinIO
+# 🌤️ Sistema ETL Incremental PostgreSQL → MinIO (Bronce-Silver)
 
-Sistema automatizado de extracción, transformación y carga (ETL) que extrae **solo datos nuevos** de PostgreSQL y los almacena en MinIO con arquitectura Data Lake de capas (Bronce → Silver).
+Sistema automatizado de extracción, transformación y carga (ETL) que extrae **solo datos nuevos** de PostgreSQL, los almacena en MinIO (capa Bronce) y automáticamente los **limpia y consolida** en una única capa Silver.
+
+**Características principales:**
+- ✅ Extracción incremental desde PostgreSQL
+- ✅ Limpieza automática (Bronce → Silver)
+- ✅ Consolidación en archivo único por tabla
+- ✅ Estrategia REPLACE: mantiene solo la versión más reciente
+- ✅ Arquitectura modular OOP
+- ✅ Ejecución automática cada 5 minutos
 
 ---
 
 ## 📋 Contenido
 
 1. [Descripción General](#descripción-general)
-2. [Arquitectura](#arquitectura)
+2. [Arquitectura y Flujo](#arquitectura-y-flujo)
 3. [Instalación y Configuración](#instalación-y-configuración)
-4. [Uso](#uso)
+4. [Uso y Ejecución](#uso-y-ejecución)
 5. [Estructura del Código](#estructura-del-código)
-6. [Refactorización OOP](#refactorización-oop)
-7. [Procesamiento de Datos](#procesamiento-de-datos)
-8. [Solución de Problemas](#solución-de-problemas)
+6. [Capa Bronce](#capa-bronce)
+7. [Capa Silver](#capa-silver)
+8. [Limpieza Automática](#limpieza-automática)
+9. [Solución de Problemas](#solución-de-problemas)
+
+---
+
+## 📋 Descripción General
+
+### ¿Qué hace?
+
+```
+PostgreSQL
+    ↓
+[Extracción Incremental]
+    ↓
+MinIO Bronce (CSV crudos)
+    ↓
+[Limpieza Automática]
+    ↓
+MinIO Silver (CSV consolidado + limpio)
+```
+
+### Flujo de Datos Automático
+
+**Ciclo completo cada 5 minutos:**
+
+1. **Extracción** (2-3 seg)
+   - Detecta columnas de rastreo
+   - Extrae solo registros nuevos
+   - Guarda en MinIO Bronce (CSV)
+
+2. **Limpieza** (1-2 seg)
+   - Descarga todos los CSV de Bronce
+   - Los combina en un único DataFrame
+   - Aplica reglas de limpieza
+   - Guarda en MinIO Silver (CSV único)
+   - Elimina versiones antiguas
+
+3. **Espera** (5 minutos)
+
+4. **Repite** indefinidamente
+
+---
+
+## 🏗️ Arquitectura y Flujo
+
+### Diagrama de Componentes
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      MAIN.PY                                │
+│              (Sistema ETL + Limpieza)                       │
+└────────────┬────────────────────────────────────────────────┘
+             │
+    ┌────────┴────────┐
+    │                 │
+    ▼                 ▼
+┌─────────────┐   ┌──────────────┐
+│   Pipeline  │   │  DataCleaner │
+│   (Extrae)  │   │  (Limpia)    │
+└────────────┬┘   └──────────┬───┘
+             │               │
+    ┌────────▼────────┐     │
+    │  PostgreSQL     │     │
+    │  (Origen)       │     │
+    └─────────────────┘     │
+                            │
+    ┌───────────────────────┼───────────────────────┐
+    │                       │                       │
+    ▼                       │                       ▼
+┌──────────────┐           │               ┌──────────────┐
+│ MinIO Bronce │           │               │ MinIO Silver │
+│ (CSV crudos) │           └──────────────→│ (CSV limpio) │
+└──────────────┘                           └──────────────┘
+```
+
+### Directorio del Proyecto
+
+```
+Estacion_Meteorologica/
+├── main.py                          # 🚀 Punto de entrada (orquesta todo)
+├── run_scheduler.ps1                # Script PowerShell
+├── run_scheduler.sh                 # Script Bash
+│
+├── config/
+│   ├── database_config.py           # Config PostgreSQL
+│   └── minio_config.py              # Config MinIO
+│
+├── etl/
+│   ├── pipeline.py                  # Orquestación extracción
+│   ├── table_processor.py           # Procesamiento por tabla
+│   ├── cleaners/                    # 🆕 MÓDULO DE LIMPIEZA
+│   │   ├── __init__.py
+│   │   └── data_cleaner.py          # 🆕 Limpieza automática
+│   ├── extractors/
+│   │   ├── data_extractor.py        # Extracción incremental
+│   │   └── table_inspector.py       # Inspección de schema
+│   ├── writers/
+│   │   ├── csv_writer.py            # Escritura CSV
+│   │   └── file_writer.py           # Interfaz base
+│   ├── uploaders/
+│   │   └── minio_uploader.py        # Carga a MinIO
+│   ├── control/
+│   │   └── control_manager.py       # Gestión de estado
+│   ├── etl_state.py                 # Estado JSON
+│   └── utils/
+│       └── db_utils.py              # Utilidades BD
+│
+├── .etl_state.json                  # Estado incremental
+│
+├── notebooks/
+│   └── templates/
+│       └── limpieza_template.ipynb   # Notebook alternativa
+│
+└── venv_meteo/                      # Entorno virtual
+```
+
+---
+
+## 🚀 Instalación y Configuración
+
+### Requisitos Previos
+
+- Python 3.8+
+- PostgreSQL
+- MinIO (servidor local o remoto)
+- Windows: PowerShell 5+, Linux/Mac: Bash
+
+### Paso 1: Crear Entorno Virtual
+
+```powershell
+# Windows
+python -m venv venv_meteo
+.\venv_meteo\Scripts\Activate
+
+# Linux/Mac
+python3 -m venv venv_meteo
+source venv_meteo/bin/activate
+```
+
+### Paso 2: Instalar Dependencias
+
+```bash
+pip install pandas sqlalchemy psycopg2-binary minio
+```
+
+### Paso 3: Configurar Variables de Entorno
+
+**En `run_scheduler.ps1` (Windows):**
+```powershell
+$env:PG_DB = "postgres"
+$env:PG_USER = "postgres"
+$env:PG_PASS = "1234"
+$env:PG_HOST = "10.202.50.50"
+
+$env:MINIO_ENDPOINT = "localhost:9000"
+$env:MINIO_ACCESS_KEY = "minioadmin"
+$env:MINIO_SECRET_KEY = "minioadmin"
+$env:MINIO_BUCKET = "meteo-bronze"
+```
+
+**En `run_scheduler.sh` (Linux/Mac):**
+```bash
+export PG_HOST="10.202.50.50"
+export PG_USER="postgres"
+export PG_PASS="1234"
+export PG_DB="postgres"
+export MINIO_ENDPOINT="localhost:9000"
+export MINIO_ACCESS_KEY="minioadmin"
+export MINIO_SECRET_KEY="minioadmin"
+export MINIO_BUCKET="meteo-bronze"
+```
+
+### Paso 4: Crear Buckets en MinIO
+
+```bash
+# Configurar alias MinIO
+mc alias set myminio http://localhost:9000 minioadmin minioadmin
+
+# Crear buckets
+mc mb myminio/meteo-bronze
+mc mb myminio/meteo-silver
+
+# Verificar
+mc ls myminio
+```
+
+---
+
+## ▶️ Uso y Ejecución
+
+### Ejecución Principal (RECOMENDADO)
+
+```powershell
+# Activar entorno
+.\venv_meteo\Scripts\Activate
+
+# Ejecutar
+python main.py
+
+# Salida esperada:
+# ════════════════════════════════════════════════════
+# 🚀 Iniciando Sistema ETL Incremental PostgreSQL → MinIO
+# ════════════════════════════════════════════════════
+# 
+# --- CICLO 1: 2025-12-03 09:40:12 ---
+# Procesando tabla: sensor_readings
+#    📊 Incremental (timestamp)
+# [INFO] Iniciando limpieza automática...
+# ================================================================================
+# [PROCESO] Limpiando sensor_readings
+# ...
+```
+
+**Presionar Ctrl+C para detener.**
+
+### Salida Esperada
+
+```
+--- CICLO 1: 2025-12-03 09:40:12 ---
+
+Procesando tabla: sensor_readings
+   📊 Incremental (timestamp)
+      > 2025-10-23T12:11:04.612475+00:00
+   📦 Registros nuevos: 97
+   ✅ Subido a MinIO: sensor_readings_bronce_20251203093625.csv
+
+🎯 RESUMEN: 97 registros nuevos en este batch.
+
+[INFO] Iniciando limpieza automática...
+
+================================================================================
+[PROCESO] Limpiando sensor_readings
+================================================================================
+[INFO] Encontrados 1 archivo(s) de sensor_readings
+       - sensor_readings/sensor_readings_bronce_20251203093625.csv
+[INFO] Combinando 1 archivo(s)...
+[OK] Cargado: sensor_readings_bronce_20251203093625.csv (97 filas)
+[OK] DataFrames combinados: 97 filas totales
+[INFO] Limpiando datos...
+[OK] Duplicados eliminados: 97 → 97
+[OK] Outliers en temperature: 13 reemplazados con mediana (24.00)
+[OK] Columnas innecesarias eliminadas
+[OK] Valores inválidos filtrados: 0 eliminadas → 97 filas finales
+[INFO] Guardando en Silver (estrategia REPLACE)...
+[EXITO] sensor_readings: 97 filas guardadas en Silver
+[INFO] Archivo: sensor_readings_silver_20251203094013.csv
+[INFO] Eliminando versiones antiguas...
+[OK] Eliminado: sensor_readings_silver_20251203093847.csv
+[OK] sensor_readings: 1 archivos eliminados (mantiene: sensor_readings_silver_20251203094013.csv)
+
+[INFO] Esperando 300s...
+```
+
+---
+
+## 🔧 Estructura del Código
+
+### Configuración
+
+#### **DatabaseConfig**
+```python
+from config import DatabaseConfig
+
+config = DatabaseConfig()
+# Propiedades:
+# - user: str (usuario PostgreSQL)
+# - password: str (contraseña)
+# - host: str (IP/dominio)
+# - database: str (nombre BD)
+# - connection_url: str (URL formateada)
+```
+
+#### **MinIOConfig**
+```python
+from config import MinIOConfig
+
+config = MinIOConfig()
+# Propiedades:
+# - endpoint: str (IP:puerto)
+# - access_key: str
+# - secret_key: str
+# - bucket: str (meteo-bronze)
+```
+
+### Pipeline Principal
+
+#### **ETLPipeline** (etl/pipeline.py)
+Coordina extracción de todas las tablas.
+
+```python
+pipeline = ETLPipeline(db_config, minio_config)
+total_records = pipeline.process_batch()  # Una ronda
+pipeline.run_continuous(interval_seconds=300)  # Bucle infinito
+```
+
+#### **TableProcessor** (etl/table_processor.py)
+Procesa una tabla individual.
+
+```python
+processor = TableProcessor(connection, table_name, state_manager, ...)
+records = processor.process()
+```
+
+**Flujo:**
+1. Detecta columna de rastreo
+2. Obtiene último valor procesado
+3. Extrae datos nuevos
+4. Guarda en Bronce
+5. Actualiza estado
+
+### Extracción
+
+#### **DataExtractor** (etl/extractors/data_extractor.py)
+Extrae datos incrementales.
+
+```python
+extractor = DataExtractor(connection, "sensor_readings", "timestamp", "timestamp")
+df = extractor.extract_incremental(last_value="2025-10-23T12:11:04.612475+00:00")
+```
+
+#### **TableInspector** (etl/extractors/table_inspector.py)
+Inspecciona estructura de tabla.
+
+```python
+inspector = TableInspector(connection)
+tables = inspector.get_all_tables()
+tracking_col, tracking_type = inspector.detect_tracking_column("sensor_readings")
+```
+
+### Limpieza Automática 🆕
+
+#### **DataCleaner** (etl/cleaners/data_cleaner.py)
+Limpia datos de Bronce y genera Silver.
+
+```python
+cleaner = DataCleaner(minio_config)
+rows_saved = cleaner.clean_table("sensor_readings")
+```
+
+**Proceso automático:**
+1. Lista archivos CSV en Bronce
+2. Descarga y combina todos
+3. Aplica limpieza
+4. Guarda en Silver
+5. Elimina versiones antiguas (REPLACE)
+
+---
+
+## 💾 Capa Bronce
+
+### Contenido
+- Archivos CSV sin procesar
+- Datos tal como salen de PostgreSQL
+- Uno por cada extracción incremental
+- Formato: `tabla_bronce_YYYYMMDDHHMMSS.csv`
+
+### Estructura en MinIO
+
+```
+meteo-bronze/
+├── sensor_readings/
+│   ├── sensor_readings_bronce_20251203093625.csv  (97 filas)
+│   └── sensor_readings_bronce_20251203100123.csv  (45 filas)
+├── estaciones/
+│   └── estaciones_bronce_20251203093625.csv  (50 filas)
+└── [otras tablas]/
+```
+
+### Características
+- ❌ Sin deduplicación
+- ❌ Con outliers
+- ❌ Columnas redundantes
+- ✅ Histórico completo disponible
+
+---
+
+## 🧹 Capa Silver
+
+### Contenido
+- Archivos CSV limpios y consolidados
+- **Un único archivo por tabla** (estrategia REPLACE)
+- Datos combinados de todas las extracciones
+- Formato: `tabla_silver_YYYYMMDDHHMMSS.csv`
+
+### Estructura en MinIO
+
+```
+meteo-silver/
+├── sensor_readings/
+│   └── sensor_readings_silver_20251203094013.csv  (97 filas limpias)
+├── estaciones/
+│   └── estaciones_silver_20251203094013.csv  (50 filas limpias)
+└── [otras tablas]/
+```
+
+### Características
+- ✅ Sin duplicados
+- ✅ Outliers reemplazados con mediana
+- ✅ Columnas innecesarias eliminadas
+- ✅ Valores en rangos válidos
+- ✅ **Un único archivo consolidado**
+
+---
+
+## 🧹 Limpieza Automática
+
+### Operaciones de Limpieza
+
+#### 1. Eliminación de Duplicados
+```
+Antes:  100 filas
+Después: 100 filas (ejemplo sin duplicados)
+```
+
+#### 2. Reemplazo de Outliers (Método IQR)
+```
+Temperatura normal: 10°C - 50°C
+Cálculo:
+  Q1 = Percentil 25
+  Q3 = Percentil 75
+  IQR = Q3 - Q1
+  Límite inferior = Q1 - 1.5 × IQR
+  Límite superior = Q3 + 1.5 × IQR
+  
+Outliers detectados: 13
+Acción: Reemplazar con mediana (24.00°C)
+```
+
+#### 3. Eliminación de Columnas
+```
+Columnas eliminadas:
+- uv_level
+- vibration
+- rain_raw
+- wind_raw
+- pressure
+```
+
+#### 4. Filtrado de Rangos
+```
+Temperatura: 10°C - 50°C
+Humedad: 0% - 100%
+```
+
+### Estrategia REPLACE
+
+**Problema:** ¿Qué pasa si se ejecuta múltiples veces?
+
+**Solución:** REPLACE automático
+
+```
+CICLO 1 (09:00): Extrae 100 registros
+  → Bronce: archivo #1 (100 filas)
+  → Silver: sensor_readings_silver_20251203_090000.csv (100 limpias)
+
+CICLO 2 (09:05): Extrae 50 nuevos registros
+  → Bronce: archivo #2 (50 filas)
+  → Combina Bronce #1 + #2 = 150 filas
+  → Silver: sensor_readings_silver_20251203_090500.csv (150 limpias)
+  → ❌ Elimina versión anterior
+  → ✅ Mantiene solo la más reciente
+
+CICLO 3 (09:10): Extrae 30 nuevos registros
+  → Bronce: archivo #3 (30 filas)
+  → Combina Bronce #1 + #2 + #3 = 180 filas
+  → Silver: sensor_readings_silver_20251203_091000.csv (180 limpias)
+  → ❌ Elimina versión anterior
+  → ✅ Mantiene solo la más reciente
+```
+
+**Ventajas:**
+- ✅ Dataset actualizado constantemente
+- ✅ Archivo no crece indefinidamente
+- ✅ Espacio controlado en MinIO
+- ✅ Totalmente automático
+- ✅ Sin intervención manual
+
+---
+
+## 🔍 Verificación de Datos
+
+### Ver archivos en MinIO
+```bash
+mc ls myminio/meteo-bronze/sensor_readings/
+mc ls myminio/meteo-silver/sensor_readings/
+```
+
+### Descargar archivo
+```bash
+mc cp myminio/meteo-silver/sensor_readings/sensor_readings_silver*.csv ./
+```
+
+### Leer con Pandas
+```python
+import pandas as pd
+
+df = pd.read_csv('sensor_readings_silver_20251203_094013.csv')
+print(f"Filas: {len(df)}")
+print(f"Columnas: {len(df.columns)}")
+print(df.head())
+```
+
+### Ver estado de extracciones
+```python
+from etl.etl_state import StateManager
+
+manager = StateManager()
+manager.display_state()
+```
+
+---
+
+## 🛠️ Solución de Problemas
+
+### Error: "No connection to PostgreSQL"
+```powershell
+# Verificar credenciales
+$env:PG_HOST = "10.202.50.50"
+$env:PG_USER = "postgres"
+$env:PG_PASS = "1234"
+
+# Probar conexión
+psql -h 10.202.50.50 -U postgres -d postgres -c "SELECT 1"
+```
+
+### Error: "MinIO connection refused"
+```bash
+# Verificar que MinIO está ejecutándose
+curl http://localhost:9000
+
+# Configurar alias
+mc alias set myminio http://localhost:9000 minioadmin minioadmin
+mc ls myminio
+```
+
+### Error: "Columna de rastreo no detectada"
+Editar en `etl/extractors/table_inspector.py`:
+```python
+TIMESTAMP_COLUMNS = ['created_at', 'updated_at', 'timestamp', 'fecha', 'tu_columna']
+```
+
+### No se generan archivos en Silver
+1. Verificar que hay datos en Bronce
+2. Revisar logs de `DataCleaner`
+3. Ejecutar manualmente: `cleaner.clean_table("sensor_readings")`
+
+### Archivos viejos se acumulan en Silver
+- Verificar que `_manage_versions()` se ejecuta
+- Ver logs de "Eliminado:"
+- El REPLACE debe ocurrir automáticamente
+
+---
+
+## 📊 Estadísticas de Ejemplo
+
+```
+Sistema Ejecutado: 3 ciclos
+Período: 09:00 - 09:10 (10 minutos)
+
+BRONCE:
+  sensor_readings: 3 archivos, 175 filas totales
+  estaciones: 1 archivo, 50 filas
+  
+SILVER:
+  sensor_readings: 1 archivo (REPLACE activo), 175 limpias
+  estaciones: 1 archivo (REPLACE activo), 50 limpias
+
+Limpieza:
+  Duplicados eliminados: 0
+  Outliers corregidos: 28
+  Columnas eliminadas: 5
+  Retención: 99.3%
+```
+
+---
+
+## 📖 Documentación Adicional
+
+- **MIGRACION_STATE_MANAGEMENT.md**: Gestión de estado JSON
+- **ANALISIS_LIMPIEZA_CODIGO.md**: Código eliminado durante refactorización
+- **ESTADO_FINAL_LIMPIEZA.md**: Estado actual del proyecto
+
+---
+
+**Última actualización:** 3 de Diciembre de 2025  
+**Versión:** 3.0 (Con Limpieza Automática)  
+**Estado:** ✅ Producción
+
 
 ---
 
@@ -362,7 +957,6 @@ DatabaseUtils.execute(connection, query, params)
 **Clases:**
 - `DatabaseUtils`: Métodos estáticos para ejecutar queries
 - `TableQueryBuilder`: Constructor de queries
-- `ETLControlQueries`: Queries de tabla de control
 
 ---
 

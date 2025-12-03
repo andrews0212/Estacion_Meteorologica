@@ -82,8 +82,6 @@ class TableInspector:
         """
         Obtiene lista de todas las tablas.
         
-        Excluye tabla 'etl_control'.
-        
         Returns:
             Lista de nombres de tablas
         """
@@ -91,7 +89,7 @@ class TableInspector:
             self.connection,
             TableQueryBuilder.get_list_tables_query()
         )
-        return [t[0] for t in tables if t[0] != 'etl_control']
+        return [t[0] for t in tables]
     
     def get_columns(self, table_name: str) -> List[Tuple[str, str]]:
         """

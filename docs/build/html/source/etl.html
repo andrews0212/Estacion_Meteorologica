@@ -1,0 +1,948 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="es" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ETL package &mdash; documentación de Estación Meteorológica ETL - 3.0</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=aa9c3b5f"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+      <script src="../_static/translations.js?v=f85f4cfb"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Índice" href="../genindex.html" />
+    <link rel="search" title="Búsqueda" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search"  style="background: #2980B9" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica ETL
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Buscar documentos" aria-label="Buscar documentos" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Guías</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../readme.html">Introducción</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../documentacion.html">Documentación Técnica Completa</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">API Reference</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Información</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Cambios</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../estado.html">Estado del Proyecto</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu"  style="background: #2980B9" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica ETL</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ETL package</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/etl.rst.txt" rel="nofollow"> Ver código fuente de la página</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="etl-package">
+<h1>ETL package<a class="headerlink" href="#etl-package" title="Link to this heading"></a></h1>
+<p>Documentación de los módulos principales bajo <cite>etl</cite>.</p>
+<section id="module-etl.extractors.data_extractor">
+<span id="extractores-lectura-de-datos"></span><h2>Extractores (Lectura de datos)<a class="headerlink" href="#module-etl.extractors.data_extractor" title="Link to this heading"></a></h2>
+<p>Extracción incremental de datos desde PostgreSQL.</p>
+<p>Este módulo contiene la clase <a class="reference internal" href="#etl.extractors.data_extractor.DataExtractor" title="etl.extractors.data_extractor.DataExtractor"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataExtractor</span></code></a> que encapsula la lógica
+para construir la consulta de extracción incremental (o carga inicial)
+y ejecutar la consulta devolviendo un <code class="docutils literal notranslate"><span class="pre">pandas.DataFrame</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.data_extractor.</span></span><span class="sig-name descname"><span class="pre">DataExtractor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Extrae datos incrementales de PostgreSQL.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa extractor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión a PostgreSQL</p></li>
+<li><p><strong>table_name</strong> – Nombre de la tabla</p></li>
+<li><p><strong>tracking_column</strong> – Columna para rastreo (timestamp o ID)</p></li>
+<li><p><strong>tracking_type</strong> – Tipo de columna (“id” o “timestamp”)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor.extract_incremental">
+<span class="sig-name descname"><span class="pre">extract_incremental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor.extract_incremental"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor.extract_incremental" title="Link to this definition"></a></dt>
+<dd><p>Extrae datos nuevos desde el último valor procesado.</p>
+<p>Construye la consulta SQL adecuada. Si <code class="docutils literal notranslate"><span class="pre">last_value</span></code> es proporcionado
+se extraen únicamente filas con <code class="docutils literal notranslate"><span class="pre">tracking_column</span></code> &gt; <code class="docutils literal notranslate"><span class="pre">last_value</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>last_value</strong> (<em>Optional</em><em>[</em><em>Any</em><em>]</em>) – Último valor procesado (None para carga inicial).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame con los registros extraídos (posible vacío).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pandas.DataFrame</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">etl.extractors.data_extractor</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataExtractor</span>
+<span class="n">extractor</span> <span class="o">=</span> <span class="n">DataExtractor</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s1">&#39;sensor_readings&#39;</span><span class="p">,</span> <span class="s1">&#39;created_at&#39;</span><span class="p">,</span> <span class="s1">&#39;timestamp&#39;</span><span class="p">)</span>
+<span class="c1"># Carga inicial</span>
+<span class="n">df_all</span> <span class="o">=</span> <span class="n">extractor</span><span class="o">.</span><span class="n">extract_incremental</span><span class="p">()</span>
+<span class="c1"># Extracción incremental</span>
+<span class="n">last</span> <span class="o">=</span> <span class="n">df_all</span><span class="p">[</span><span class="s1">&#39;created_at&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">df_new</span> <span class="o">=</span> <span class="n">extractor</span><span class="o">.</span><span class="n">extract_incremental</span><span class="p">(</span><span class="n">last_value</span><span class="o">=</span><span class="n">last</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Notas:</dt><dd><ul class="simple">
+<li><p>Devuelve un DataFrame compatible con pandas, por lo que el resto del
+pipeline puede operar con métodos estándar como <code class="docutils literal notranslate"><span class="pre">to_csv</span></code> o <code class="docutils literal notranslate"><span class="pre">concat</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">last_value</span></code> puede ser string ISO (para timestamps) o numérico (para ids),
+el método intenta formatearlo correctamente en la consulta.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.extractors.table_inspector">Inspección de estructuras de tablas en PostgreSQL.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.table_inspector.</span></span><span class="sig-name descname"><span class="pre">TrackingColumnDetector</span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Detecta automáticamente la mejor columna para rastreo.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.TIMESTAMP_CANDIDATES">
+<span class="sig-name descname"><span class="pre">TIMESTAMP_CANDIDATES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['created_at',</span> <span class="pre">'updated_at',</span> <span class="pre">'timestamp',</span> <span class="pre">'fecha_registro',</span> <span class="pre">'last_update']</span></em><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.TIMESTAMP_CANDIDATES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.is_numeric_type">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_numeric_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.is_numeric_type"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_numeric_type" title="Link to this definition"></a></dt>
+<dd><p>Verifica si tipo es numérico.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.is_timestamp_type">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_timestamp_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.is_timestamp_type"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_timestamp_type" title="Link to this definition"></a></dt>
+<dd><p>Verifica si tipo es timestamp.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.detect">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">detect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.detect"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.detect" title="Link to this definition"></a></dt>
+<dd><p>Detecta mejor columna para rastreo.</p>
+<p>Prioridades:
+1. Timestamp (created_at, updated_at, etc.)
+2. PRIMARY KEY numérico
+3. Columna “id” numérica</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(column_name, column_type) o None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.table_inspector.</span></span><span class="sig-name descname"><span class="pre">TableInspector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Inspecciona estructura de tablas PostgreSQL.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa inspector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>connection</strong> – Conexión a PostgreSQL</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.get_all_tables">
+<span class="sig-name descname"><span class="pre">get_all_tables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.get_all_tables"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.get_all_tables" title="Link to this definition"></a></dt>
+<dd><p>Obtiene lista de todas las tablas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Lista de nombres de tablas</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.get_columns">
+<span class="sig-name descname"><span class="pre">get_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.get_columns"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.get_columns" title="Link to this definition"></a></dt>
+<dd><p>Obtiene columnas con tipos de datos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de (column_name, data_type)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.detect_tracking_column">
+<span class="sig-name descname"><span class="pre">detect_tracking_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.detect_tracking_column"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.detect_tracking_column" title="Link to this definition"></a></dt>
+<dd><p>Detecta mejor columna para rastreo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>(column_name, column_type) o (None, None)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.writers.file_writer">
+<span id="escritores-serializacion"></span><h2>Escritores (Serialización)<a class="headerlink" href="#module-etl.writers.file_writer" title="Link to this heading"></a></h2>
+<p>Clase base para escritores de archivos.</p>
+<p>Proporciona la interfaz abstracta para serializar DataFrames a disco.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.writers.file_writer.</span></span><span class="sig-name descname"><span class="pre">FileWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Clase base para escritores de archivos.</p>
+<p>Proporciona la lógica común de nombre de fichero temporal y eliminación
+del archivo cuando ya no es necesario.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa escritor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla.</p></li>
+<li><p><strong>extension</strong> (<em>str</em>) – Extensión del archivo (csv, parquet, etc.).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.write">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.write"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.write" title="Link to this definition"></a></dt>
+<dd><p>Escribe DataFrame a archivo.</p>
+<p>Debe ser implementado por subclases y retornar la ruta local del
+archivo generado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas.DataFrame</em>) – DataFrame a serializar.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ruta absoluta al archivo generado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">writer</span> <span class="o">=</span> <span class="n">CSVWriter</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+<span class="n">path</span> <span class="o">=</span> <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+<span class="c1"># path -&gt; &#39;C:\Windows\Temp\sensor_readings_bronce_20250101120000.csv&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.cleanup">
+<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.cleanup"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.cleanup" title="Link to this definition"></a></dt>
+<dd><p>Elimina archivo temporal.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.writers.csv_writer">Escritor de archivos CSV.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.writers.csv_writer.</span></span><span class="sig-name descname"><span class="pre">CSVWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#etl.writers.file_writer.FileWriter" title="etl.writers.file_writer.FileWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileWriter</span></code></a></p>
+<p>Escritor de archivos CSV.</p>
+<p>Serializa DataFrames a archivos CSV en la carpeta temporal del sistema.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa escritor CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla (usado en nombre del fichero).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter.write"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter.write" title="Link to this definition"></a></dt>
+<dd><p>Guarda DataFrame como CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataframe</strong> (<em>pandas.DataFrame</em>) – DataFrame a serializar.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ruta absoluta al archivo generado.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.uploaders.minio_uploader">
+<span id="cargadores-almacenamiento"></span><h2>Cargadores (Almacenamiento)<a class="headerlink" href="#module-etl.uploaders.minio_uploader" title="Link to this heading"></a></h2>
+<p>Gestión de subida de archivos a MinIO.</p>
+<p>Proporciona una pequeña envoltura sobre la librería <code class="docutils literal notranslate"><span class="pre">minio</span></code> para
+subir archivos locales al bucket configurado en <code class="docutils literal notranslate"><span class="pre">MinIOConfig</span></code>.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.uploaders.minio_uploader.MinIOUploader">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.uploaders.minio_uploader.</span></span><span class="sig-name descname"><span class="pre">MinIOUploader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/uploaders/minio_uploader.html#MinIOUploader"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.uploaders.minio_uploader.MinIOUploader" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestiona subida de archivos a MinIO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> (<a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><em>config.minio_config.MinIOConfig</em></a>) – Instancia de configuración de MinIO.</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.uploaders.minio_uploader.MinIOUploader.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/uploaders/minio_uploader.html#MinIOUploader.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.uploaders.minio_uploader.MinIOUploader.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa uploader.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> (<a class="reference internal" href="../config.html#config.MinIOConfig" title="config.MinIOConfig"><em>MinIOConfig</em></a>) – Configuración de MinIO.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.uploaders.minio_uploader.MinIOUploader.upload">
+<span class="sig-name descname"><span class="pre">upload</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">local_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/uploaders/minio_uploader.html#MinIOUploader.upload"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.uploaders.minio_uploader.MinIOUploader.upload" title="Link to this definition"></a></dt>
+<dd><p>Sube archivo a MinIO y retorna la ruta en el bucket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>local_path</strong> (<em>str</em>) – Ruta local del archivo.</p></li>
+<li><p><strong>table_name</strong> (<em>str</em>) – Nombre lógico de la tabla (se usa como prefijo).</p></li>
+<li><p><strong>file_name</strong> (<em>str</em>) – Nombre del archivo objetivo.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ruta completa en MinIO: <code class="docutils literal notranslate"><span class="pre">{bucket}/{table_name}/{file_name}</span></code>.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">uploader</span> <span class="o">=</span> <span class="n">MinIOUploader</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="n">uri</span> <span class="o">=</span> <span class="n">uploader</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span><span class="s1">&#39;C:/tmp/sensor.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;sensor_readings&#39;</span><span class="p">,</span> <span class="s1">&#39;sensor_bronce_20250101.csv&#39;</span><span class="p">)</span>
+<span class="c1"># uri -&gt; &#39;meteo-bronze/sensor_readings/sensor_bronce_20250101.csv&#39;</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.control.control_manager">
+<span id="control-gestion-de-estado"></span><h2>Control (Gestión de estado)<a class="headerlink" href="#module-etl.control.control_manager" title="Link to this heading"></a></h2>
+<p>Gestión de estado de extracciones: Archivo JSON en lugar de tabla SQL.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.control.control_manager.</span></span><span class="sig-name descname"><span class="pre">ExtractionStateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestiona el estado de extracciones ETL usando archivo JSON.</p>
+<p>Almacena y recupera el último valor extraído de cada tabla,
+permitiendo reiniciar extracciones desde el último punto procesado.
+Reemplaza la tabla <code class="docutils literal notranslate"><span class="pre">etl_control</span></code> de la base de datos.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa gestor de estado de extracciones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state_file</strong> (<em>str</em>) – Ruta del archivo JSON de estado.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.initialize_state">
+<span class="sig-name descname"><span class="pre">initialize_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.initialize_state"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.initialize_state" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el archivo de estado (se crea automáticamente si no existe).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.get_last_extracted_value">
+<span class="sig-name descname"><span class="pre">get_last_extracted_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.get_last_extracted_value"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.get_last_extracted_value" title="Link to this definition"></a></dt>
+<dd><p>Obtiene último valor extraído de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tupla <code class="docutils literal notranslate"><span class="pre">(last_value,</span> <span class="pre">tracking_column)</span></code>
+o <code class="docutils literal notranslate"><span class="pre">(None,</span> <span class="pre">None)</span></code> si no existe registro.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[Optional[Any], Optional[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.update_extraction_state">
+<span class="sig-name descname"><span class="pre">update_extraction_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows_extracted</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.update_extraction_state"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.update_extraction_state" title="Link to this definition"></a></dt>
+<dd><p>Actualiza el estado de extracción de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla.</p></li>
+<li><p><strong>value</strong> (<em>Any</em>) – Nuevo valor máximo extraído (numérico o timestamp).</p></li>
+<li><p><strong>tracking_column</strong> (<em>str</em>) – Nombre de columna de rastreo.</p></li>
+<li><p><strong>rows_extracted</strong> (<em>int</em>) – Cantidad de filas extraídas en este ciclo.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.display_current_state">
+<span class="sig-name descname"><span class="pre">display_current_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.display_current_state"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.display_current_state" title="Link to this definition"></a></dt>
+<dd><p>Muestra el estado actual de todas las extracciones.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.reset_extraction_state">
+<span class="sig-name descname"><span class="pre">reset_extraction_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.reset_extraction_state"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.reset_extraction_state" title="Link to this definition"></a></dt>
+<dd><p>Limpia el estado de extracción de una tabla (o todas).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Tabla a limpiar. Si None, limpia todas.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.managers.silver_manager">
+<span id="managers-procesos-de-negocio"></span><h2>Managers (Procesos de negocio)<a class="headerlink" href="#module-etl.managers.silver_manager" title="Link to this heading"></a></h2>
+<p>Gestor de la capa Silver y gestión de versiones.</p>
+<p>Este módulo implementa una estrategia simple de versiones (REPLACE) donde
+solo se mantiene la versión más reciente de cada tabla en el bucket Silver.</p>
+<p>Funciones principales:
+- listar versiones por tabla
+- obtener la versión más reciente
+- eliminar versiones antiguas
+- obtener estadísticas (tamaño total, número de versiones)</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.managers.silver_manager.</span></span><span class="sig-name descname"><span class="pre">SilverManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestiona archivos en capa Silver - Limpia versiones antiguas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> – Instancia de configuración de MinIO con atributos
+<code class="docutils literal notranslate"><span class="pre">endpoint</span></code>, <code class="docutils literal notranslate"><span class="pre">access_key</span></code>, <code class="docutils literal notranslate"><span class="pre">secret_key</span></code> y <code class="docutils literal notranslate"><span class="pre">bucket</span></code>.</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinIOConfig</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">MinIOConfig</span><span class="p">()</span>
+<span class="n">sm</span> <span class="o">=</span> <span class="n">SilverManager</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="n">sm</span><span class="o">.</span><span class="n">limpiar_versiones_antiguas</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de Silver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> – Configuración de MinIO (MinIOConfig)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.obtener_versiones_tabla">
+<span class="sig-name descname"><span class="pre">obtener_versiones_tabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.obtener_versiones_tabla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.obtener_versiones_tabla" title="Link to this definition"></a></dt>
+<dd><p>Obtiene TODOS los archivos Silver de una tabla, ordenados por fecha.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> (<em>str</em>) – Nombre de la tabla (ej: <code class="docutils literal notranslate"><span class="pre">sensor_readings</span></code>).</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de nombres de archivos ordenados (antiguos → recientes).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.obtener_archivo_reciente">
+<span class="sig-name descname"><span class="pre">obtener_archivo_reciente</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.obtener_archivo_reciente"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.obtener_archivo_reciente" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el archivo Silver más reciente de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> (<em>str</em>) – Nombre de la tabla.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Nombre del archivo más reciente o None.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.eliminar_archivo">
+<span class="sig-name descname"><span class="pre">eliminar_archivo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">archivo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.eliminar_archivo"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.eliminar_archivo" title="Link to this definition"></a></dt>
+<dd><p>Elimina un archivo específico de Silver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tabla</strong> (<em>str</em>) – Nombre de la tabla.</p></li>
+<li><p><strong>archivo</strong> (<em>str</em>) – Nombre del archivo a eliminar.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se eliminó correctamente.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.limpiar_versiones_antiguas">
+<span class="sig-name descname"><span class="pre">limpiar_versiones_antiguas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mantener_actual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.limpiar_versiones_antiguas"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.limpiar_versiones_antiguas" title="Link to this definition"></a></dt>
+<dd><p>Elimina archivos Silver antiguos según la estrategia REPLACE.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tabla</strong> (<em>str</em>) – Nombre de la tabla (p. ej. <code class="docutils literal notranslate"><span class="pre">sensor_readings</span></code>).</p></li>
+<li><p><strong>mantener_actual</strong> (<em>bool</em>) – Si <code class="docutils literal notranslate"><span class="pre">True</span></code> mantiene solo la versión más reciente;
+si <code class="docutils literal notranslate"><span class="pre">False</span></code> elimina todas las versiones.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cantidad de archivos eliminados.</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sm</span> <span class="o">=</span> <span class="n">SilverManager</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+<span class="n">removed</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">limpiar_versiones_antiguas</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Archivos eliminados: </span><span class="si">{</span><span class="n">removed</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.obtener_estadisticas_tabla">
+<span class="sig-name descname"><span class="pre">obtener_estadisticas_tabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.obtener_estadisticas_tabla"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.obtener_estadisticas_tabla" title="Link to this definition"></a></dt>
+<dd><p>Obtiene estadísticas de versiones de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> (<em>str</em>) – Nombre de la tabla.</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Diccionario con estadísticas (tabla, total_versiones, versión_antigua,
+versión_reciente, espacio_total_mb).</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[str, Any]</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.utils.db_utils">
+<span id="utilidades-bd-y-queries"></span><h2>Utilidades (BD y queries)<a class="headerlink" href="#module-etl.utils.db_utils" title="Link to this heading"></a></h2>
+<p>Utilidades para operaciones de base de datos y construcción de queries.</p>
+<p>Contiene funciones reutilizables para ejecutar queries con SQLAlchemy y
+construir consultas usadas por el pipeline (listar tablas, obtener columnas,
+consulta incremental, etc.).</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.utils.db_utils.</span></span><span class="sig-name descname"><span class="pre">DatabaseUtils</span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Métodos reutilizables para operaciones de BD.</p>
+<p>Este wrapper ofrece manejo básico de errores y trazas para facilitar
+el debugging durante la generación de documentación y la ejecución.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.execute_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.execute_query"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.execute_query" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta una query y retorna resultado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> (<em>sqlalchemy.Connection</em>) – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> (<em>str</em>) – Query SQL con parámetros nombrados (:nombre)</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>) – Diccionario con parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Resultado de la query (CursorResult)</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_one">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_one"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_one" title="Link to this definition"></a></dt>
+<dd><p>Obtiene un resultado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> (<em>sqlalchemy.Connection</em>) – Conexión activa</p></li>
+<li><p><strong>query</strong> (<em>str</em>) – Query SQL</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>) – Parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Primera fila o None</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_all">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_all"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_all" title="Link to this definition"></a></dt>
+<dd><p>Obtiene todos los resultados.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> (<em>sqlalchemy.Connection</em>) – Conexión activa</p></li>
+<li><p><strong>query</strong> (<em>str</em>) – Query SQL</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>) – Parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de tuplas</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_scalar">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_scalar"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_scalar" title="Link to this definition"></a></dt>
+<dd><p>Obtiene un valor escalar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> (<em>sqlalchemy.Connection</em>) – Conexión activa</p></li>
+<li><p><strong>query</strong> (<em>str</em>) – Query SQL</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>) – Parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Valor escalar o None</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.execute_and_commit">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_and_commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.execute_and_commit"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.execute_and_commit" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta query y hace commit. Retorna filas afectadas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> (<em>sqlalchemy.Connection</em>) – Conexión activa</p></li>
+<li><p><strong>query</strong> (<em>str</em>) – Query SQL</p></li>
+<li><p><strong>params</strong> (<em>dict</em><em> | </em><em>None</em>) – Parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cantidad de filas afectadas</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.utils.db_utils.</span></span><span class="sig-name descname"><span class="pre">TableQueryBuilder</span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Constructor de queries para operaciones con tablas.</p>
+<p>Proporciona métodos estáticos para construir queries comunes
+de inspección de tablas y extracción incremental.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_LIST_TABLES">
+<span class="sig-name descname"><span class="pre">QUERY_LIST_TABLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">table_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.tables</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">table_schema</span> <span class="pre">=</span> <span class="pre">'public'</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">table_type</span> <span class="pre">=</span> <span class="pre">'BASE</span> <span class="pre">TABLE'\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_LIST_TABLES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_GET_COLUMNS">
+<span class="sig-name descname"><span class="pre">QUERY_GET_COLUMNS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">column_name,</span> <span class="pre">data_type</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.columns</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">table_name</span> <span class="pre">=</span> <span class="pre">:table_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">table_schema</span> <span class="pre">=</span> <span class="pre">'public'\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ORDER</span> <span class="pre">BY</span> <span class="pre">ordinal_position\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_COLUMNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_GET_PRIMARY_KEY">
+<span class="sig-name descname"><span class="pre">QUERY_GET_PRIMARY_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">ccu.column_name\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.table_constraints</span> <span class="pre">tc</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">JOIN</span> <span class="pre">information_schema.constraint_column_usage</span> <span class="pre">ccu</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ON</span> <span class="pre">tc.constraint_name</span> <span class="pre">=</span> <span class="pre">ccu.constraint_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">tc.constraint_type</span> <span class="pre">=</span> <span class="pre">'PRIMARY</span> <span class="pre">KEY'</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">tc.table_name</span> <span class="pre">=</span> <span class="pre">:table_name\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">LIMIT</span> <span class="pre">1\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_PRIMARY_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_list_tables_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_list_tables_query</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_list_tables_query"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_list_tables_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query para listar tablas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Query SQL para listar todas las tablas en esquema “public”</p>
+</dd>
+<dt class="field-even">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_columns_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_columns_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_columns_query"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_columns_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query y params para obtener columnas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>(query, params_dict)</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_primary_key_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_primary_key_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_primary_key_query"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_primary_key_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query y params para obtener primary key.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em>) – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Devuelve<span class="colon">:</span></dt>
+<dd class="field-even"><p>(query, params_dict)</p>
+</dd>
+<dt class="field-odd">Tipo del valor devuelto<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="module-etl.pipeline">
+<span id="orquestacion-pipeline"></span><h2>Orquestación (Pipeline)<a class="headerlink" href="#module-etl.pipeline" title="Link to this heading"></a></h2>
+<p>Pipeline principal de ETL que coordina extracción, procesamiento y carga.</p>
+<p>El pipeline orquesta las siguientes etapas:
+- Inicialización del estado de extracciones (.etl_state.json)
+- Inspección de tablas disponibles en la base de datos
+- Extracción incremental por tabla
+- Serialización a archivos temporales y subida a MinIO</p>
+<p>El módulo utiliza SQLAlchemy para conexiones y pooling.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.pipeline.ETLPipeline">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.pipeline.</span></span><span class="sig-name descname"><span class="pre">ETLPipeline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.database_config.DatabaseConfig" title="config.database_config.DatabaseConfig"><span class="pre">DatabaseConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/pipeline.html#ETLPipeline"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.pipeline.ETLPipeline" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Pipeline principal que coordina la extracción ETL.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.pipeline.ETLPipeline.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.database_config.DatabaseConfig" title="config.database_config.DatabaseConfig"><span class="pre">DatabaseConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/pipeline.html#ETLPipeline.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.pipeline.ETLPipeline.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa pipeline ETL.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>db_config</strong> – Configuración de PostgreSQL</p></li>
+<li><p><strong>minio_config</strong> – Configuración de MinIO</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.pipeline.ETLPipeline.process_batch">
+<span class="sig-name descname"><span class="pre">process_batch</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/pipeline.html#ETLPipeline.process_batch"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.pipeline.ETLPipeline.process_batch" title="Link to this definition"></a></dt>
+<dd><p>Procesa un batch completo de todas las tablas.</p>
+<p>La función abre una conexión (pool), inicializa el gestor de control
+y itera por todas las tablas detectadas aplicando el
+<a class="reference internal" href="#etl.table_processor.TableProcessor" title="etl.table_processor.TableProcessor"><code class="xref py py-class docutils literal notranslate"><span class="pre">etl.table_processor.TableProcessor</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Total de registros procesados en este batch</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.pipeline.ETLPipeline.run_continuous">
+<span class="sig-name descname"><span class="pre">run_continuous</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/pipeline.html#ETLPipeline.run_continuous"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.pipeline.ETLPipeline.run_continuous" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta pipeline continuamente.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>interval_seconds</strong> – Segundos entre batches</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.table_processor">Procesamiento de tablas individuales con extracción incremental.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.table_processor.</span></span><span class="sig-name descname"><span class="pre">TableProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager" title="etl.control.control_manager.ExtractionStateManager"><span class="pre">ExtractionStateManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector" title="etl.extractors.table_inspector.TableInspector"><span class="pre">TableInspector</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Procesa una tabla individual con extracción incremental.</p>
+<p>Se encarga de:
+- Detectar columna de rastreo (timestamp o id)
+- Extraer nuevos registros usando <code class="xref py py-class docutils literal notranslate"><span class="pre">etl.data_extractor.DataExtractor</span></code>
+- Guardar los datos en un archivo temporal y subirlos a MinIO
+- Actualizar el estado de extracción (.etl_state.json) con el último valor extraído</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager" title="etl.control.control_manager.ExtractionStateManager"><span class="pre">ExtractionStateManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector" title="etl.extractors.table_inspector.TableInspector"><span class="pre">TableInspector</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor.__init__"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa procesador de tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parámetros<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión a PostgreSQL</p></li>
+<li><p><strong>table_name</strong> – Nombre de la tabla</p></li>
+<li><p><strong>state_manager</strong> – Gestor de estado de extracciones</p></li>
+<li><p><strong>inspector</strong> – Inspector de tablas</p></li>
+<li><p><strong>minio_config</strong> – Configuración de MinIO</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor.process"><span class="viewcode-link"><span class="pre">[fuente]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor.process" title="Link to this definition"></a></dt>
+<dd><p>Procesa tabla completa con extracción incremental.</p>
+<p>Workflow resumido:
+1. Detectar columna incremental (ej: created_at o id)
+2. Obtener último valor procesado desde .etl_state.json
+3. Extraer registros nuevos
+4. Si hay datos: escribir a archivo temporal, subir a MinIO y actualizar estado</p>
+<dl class="field-list simple">
+<dt class="field-odd">Devuelve<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Cantidad de registros procesados (int)</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Derechos de autor 2025, Andrews0212.</p>
+  </div>
+
+  Compilado con <a href="https://www.sphinx-doc.org/">Sphinx</a> usando un
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">tema</a>
+    proporcionado por <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

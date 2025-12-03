@@ -1,7 +1,7 @@
 """Pipeline principal de ETL que coordina extracción, procesamiento y carga.
 
 El pipeline orquesta las siguientes etapas:
-- Inicialización de la tabla de control (etl_control)
+- Inicialización del estado de extracciones (.etl_state.json)
 - Inspección de tablas disponibles en la base de datos
 - Extracción incremental por tabla
 - Serialización a archivos temporales y subida a MinIO
@@ -14,7 +14,7 @@ from typing import Optional
 from datetime import datetime
 from sqlalchemy import create_engine, Connection
 from sqlalchemy.pool import QueuePool
-from etl.control import ETLControlManager
+from etl.control.control_manager import ExtractionStateManager
 from etl.extractors import TableInspector
 from etl.table_processor import TableProcessor
 from config import DatabaseConfig, MinIOConfig
@@ -73,9 +73,9 @@ class ETLPipeline:
         Returns:
             Total de registros procesados
         """
-        # Inicializar tabla de control
-        control_manager = ETLControlManager(connection)
-        control_manager.initialize_table()
+        # Inicializar gestor de estado (.etl_state.json)
+        state_manager = ExtractionStateManager()
+        state_manager.initialize_state()
         
         # Obtener tabla a procesar
         inspector = TableInspector(connection)
@@ -83,7 +83,7 @@ class ETLPipeline:
         
         total_records = 0
         for table_name in tables:
-            processor = TableProcessor(connection, table_name, control_manager, inspector, self.minio_config)
+            processor = TableProcessor(connection, table_name, state_manager, inspector, self.minio_config)
             total_records += processor.process()
         
         print(f"\n🎯 RESUMEN: {total_records} registros nuevos en este batch.")

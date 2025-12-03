@@ -18,11 +18,17 @@ import time
 from typing import Optional
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-from etl.managers import LimpiezaBronce
+from etl.cleaners import DataCleaner
 
 
 class ETLSystem:
-    """Sistema completo de ETL + Limpieza."""
+    """Sistema de ETL - Extracción a Bronce + Limpieza automática a Silver.
+    
+    Flujo automático:
+    1. Extrae datos de PostgreSQL → Bronce (MinIO)
+    2. Limpia datos → Silver (MinIO)
+    3. Repite cada N segundos
+    """
     
     def __init__(self, 
                  db_config: Optional[DatabaseConfig] = None,
@@ -40,7 +46,7 @@ class ETLSystem:
         self.minio_config = minio_config or MinIOConfig()
         self.extraction_interval = extraction_interval
         self.pipeline = ETLPipeline(self.db_config, self.minio_config)
-        self.cleaner = LimpiezaBronce(self.minio_config)
+        self.cleaner = DataCleaner(self.minio_config)
     
     def display_config(self) -> None:
         """Muestra configuración cargada."""
@@ -54,7 +60,7 @@ class ETLSystem:
     
     def run_cycle(self, cycle_num: int) -> bool:
         """
-        Ejecuta un ciclo completo de ETL + limpieza.
+        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza a Silver.
         
         Args:
             cycle_num: Número del ciclo
@@ -64,19 +70,32 @@ class ETLSystem:
         """
         print(f"\n--- CICLO {cycle_num}: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
         
-        # 1. Extracción
+        # Extracción a Bronce
         self.pipeline.process_batch()
         
-        # 2. Limpieza
-        print("\n[INFO] Iniciando limpieza automática...")
-        exito = self.cleaner.procesar_tabla('sensor_readings')
+        # Limpieza a Silver
+        self._run_cleaning()
         
-        if exito:
-            print("[OK] Limpieza completada: datos guardados en Silver")
-        else:
-            print("[AVISO] Limpieza no completada (probablemente sin datos nuevos)")
+        return True
+    
+    def _run_cleaning(self) -> None:
+        """Ejecuta limpieza automática de todas las tablas."""
+        print(f"\n[INFO] Iniciando limpieza automática...")
         
-        return exito
+        try:
+            # Tablas a limpiar (obtenidas del inspector)
+            from etl.extractors import TableInspector
+            from sqlalchemy import create_engine
+            
+            engine = create_engine(self.db_config.connection_url)
+            with engine.connect() as connection:
+                inspector = TableInspector(connection)
+                tables = inspector.get_all_tables()
+            
+            for table_name in tables:
+                self.cleaner.clean_table(table_name)
+        except Exception as e:
+            print(f"[ERROR] Error en limpieza automática: {e}")
     
     def run_continuous(self) -> None:
         """Ejecuta sistema continuamente."""
@@ -101,7 +120,7 @@ class ETLSystem:
         print("DETENIENDO SISTEMA")
         print("=" * 80)
         print("[INFO] Pipeline detenido por el usuario")
-        print("[INFO] Hasta luego!")
+        print("[INFO] Hasta luego! no se extrajo nada")
 
 
 def main() -> None:

@@ -6,7 +6,7 @@ import pandas as pd
 from etl.extractors import DataExtractor, TableInspector
 from etl.writers import DataWriter
 from etl.uploaders import MinIOUploader
-from etl.control import ETLControlManager
+from etl.control.control_manager import ExtractionStateManager
 from config import MinIOConfig
 
 
@@ -17,13 +17,13 @@ class TableProcessor:
     - Detectar columna de rastreo (timestamp o id)
     - Extraer nuevos registros usando :class:`etl.data_extractor.DataExtractor`
     - Guardar los datos en un archivo temporal y subirlos a MinIO
-    - Actualizar la tabla de control con el último valor extraído
+    - Actualizar el estado de extracción (.etl_state.json) con el último valor extraído
     """
     
     def __init__(self,
                  connection: Connection,
                  table_name: str,
-                 control_manager: ETLControlManager,
+                 state_manager: ExtractionStateManager,
                  inspector: TableInspector,
                  minio_config: MinIOConfig):
         """
@@ -32,13 +32,13 @@ class TableProcessor:
         Args:
             connection: Conexión a PostgreSQL
             table_name: Nombre de la tabla
-            control_manager: Gestor de control ETL
+            state_manager: Gestor de estado de extracciones
             inspector: Inspector de tablas
             minio_config: Configuración de MinIO
         """
         self.connection = connection
         self.table_name = table_name
-        self.control_manager = control_manager
+        self.state_manager = state_manager
         self.inspector = inspector
         self.minio_config = minio_config
     
@@ -47,9 +47,9 @@ class TableProcessor:
 
         Workflow resumido:
         1. Detectar columna incremental (ej: created_at o id)
-        2. Obtener último valor procesado desde etl_control
+        2. Obtener último valor procesado desde .etl_state.json
         3. Extraer registros nuevos
-        4. Si hay datos: escribir a archivo temporal, subir a MinIO y actualizar control
+        4. Si hay datos: escribir a archivo temporal, subir a MinIO y actualizar estado
 
         Returns:
             Cantidad de registros procesados (int)
@@ -62,7 +62,7 @@ class TableProcessor:
             return self._handle_no_tracking_column()
         
         # 2. Obtener último valor procesado
-        last_value, stored_column = self.control_manager.get_last_extracted_value(self.table_name)
+        last_value, stored_column = self.state_manager.get_last_extracted_value(self.table_name)
         if stored_column and stored_column != tracking_column:
             last_value = None
         
@@ -91,7 +91,7 @@ class TableProcessor:
         Este método realiza:
         1. Serializar el ``DataFrame`` a un archivo temporal (CSV)
         2. Subir el archivo al bucket Bronce usando :class:`MinIOUploader`
-        3. Actualizar la tabla de control con el valor máximo de la columna de rastreo
+        3. Actualizar el estado con el valor máximo de la columna de rastreo
 
         Args:
             df (pandas.DataFrame): DataFrame con los registros a procesar.
@@ -102,12 +102,12 @@ class TableProcessor:
 
         Ejemplo::
 
-            processor = TableProcessor(conn, 'sensor_readings', control_manager, inspector, minio_cfg)
+            processor = TableProcessor(conn, 'sensor_readings', state_manager, inspector, minio_cfg)
             count = processor._process_extracted_data(df, 'created_at')
 
         Notas:
             - El método maneja la limpieza del archivo temporal aunque la subida falle.
-            - Actualiza la tabla de control con el valor máximo encontrado en ``tracking_column``.
+            - Actualiza el estado (.etl_state.json) con el valor máximo encontrado en ``tracking_column``.
         """
         count = len(df)
         print(f"   📦 Registros nuevos: {count}")
@@ -122,12 +122,13 @@ class TableProcessor:
             uploader.upload(local_path, self.table_name, writer.file_name)
             print(f"   ✅ Subido a MinIO: {writer.file_name}")
             
-            # Actualizar control
+            # Actualizar estado
             max_val = df[tracking_column].max()
-            self.control_manager.update_last_extracted_value(
+            self.state_manager.update_extraction_state(
                 self.table_name,
                 max_val,
-                tracking_column
+                tracking_column,
+                rows_extracted=count
             )
         except Exception as e:
             print(f"   ❌ Error subiendo a MinIO: {e}")
