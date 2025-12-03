@@ -3,7 +3,6 @@
 import os
 import sys
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
 # Add parent to path for imports
@@ -78,9 +77,8 @@ def run_gold_layer():
         traceback.print_exc()
         return False
     
-    # Write KPI to Gold bucket
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    archivo_gold = f'metricas_kpi_gold_{timestamp}.csv'
+    # Write KPI to Gold bucket - UPDATE existing file or create with standard name
+    archivo_gold = 'metricas_kpi_gold.csv'  # Standard name without timestamp
     
     try:
         temp_file_local = os.path.join(tempfile.gettempdir(), archivo_gold)
@@ -88,8 +86,9 @@ def run_gold_layer():
         # Write using pandas with proper CSV format
         kpi_df.to_csv(temp_file_local, index=False, encoding='utf-8')
         
+        # Upload to MinIO - will overwrite if exists
         minio_client.fput_object(MINIO_BUCKET_GOLD, archivo_gold, temp_file_local)
-        print(f'✅ {archivo_gold} guardado en Gold')
+        print(f'✅ {archivo_gold} actualizado en Gold')
         os.remove(temp_file_local)
         return True
     except Exception as e:
