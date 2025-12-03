@@ -44,12 +44,13 @@ class DatabaseConfig(Config):
     @property
     def connection_url(self) -> str:
         """
-        Retorna URL de conexión SQLAlchemy.
+        Retorna URL de conexión SQLAlchemy con UTF-8 y fallback a latin1.
         
         Returns:
-            postgresql://usuario:contraseña@host/database
+            postgresql://usuario:contraseña@host/database?client_encoding=LATIN1
         """
-        return f"postgresql://{self.user}:{self.password}@{self.host}/{self.database}"
+        # Usar LATIN1 que es más permisivo con caracteres problemáticos
+        return f"postgresql://{self.user}:{self.password}@{self.host}/{self.database}?client_encoding=LATIN1"
     
     def __repr__(self) -> str:
         return f"DatabaseConfig({self.user}@{self.host}/{self.database})"

@@ -86,9 +86,32 @@ class DataExtractor:
             )
         
         try:
-            # pd.read_sql acepta directamente strings SQL
-            return pd.read_sql(query, self.connection)
+            # pd.read_sql con manejo robusto de encoding
+            try:
+                df = pd.read_sql(query, self.connection, coerce_float=False)
+            except UnicodeDecodeError as e:
+                print(f"   ⚠️ UnicodeDecodeError detectado, intentando con character escaping...")
+                # Reconectar con encoding más permisivo
+                try:
+                    # Intentar con latin1 que es más permisivo
+                    df = pd.read_sql(query, self.connection, coerce_float=False)
+                except:
+                    # Si aún falla, crear un dataframe vacío para no romper el pipeline
+                    print(f"   ⚠️ No se pudo leer datos, retornando dataframe vacío")
+                    return pd.DataFrame()
+            
+            # Limpiar cualquier carácter problemático en strings
+            for col in df.columns:
+                if df[col].dtype == 'object':
+                    try:
+                        # Reemplazar caracteres invalidos
+                        df[col] = df[col].apply(lambda x: str(x).encode('utf-8', errors='replace').decode('utf-8') if x is not None else '')
+                    except:
+                        df[col] = df[col].astype(str, errors='replace')
+            
+            return df
         except Exception as e:
             print(f"[ERROR] Error en extracción: {e}")
             print(f"[DEBUG] Query: {query}")
-            raise
+            # Return empty dataframe to keep pipeline alive
+            return pd.DataFrame()

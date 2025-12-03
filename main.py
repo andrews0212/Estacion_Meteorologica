@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """Punto de entrada del sistema ETL.
 
 Este módulo contiene la clase :class:`ETLSystem` que orquesta el pipeline
@@ -13,27 +14,37 @@ Ejecutar en modo continuo::
     python main.py
 """
 
+import sys
 import datetime
 import time
+import subprocess
 from typing import Optional
+
+# Configurar UTF-8 en Windows
+if sys.platform == 'win32':
+    import os
+    os.environ['PYTHONIOENCODING'] = 'utf-8'
+    sys.stdout.reconfigure(encoding='utf-8')
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
-from etl.cleaners import DataCleaner
+from pathlib import Path
 
 
 class ETLSystem:
-    """Sistema de ETL - Extracción a Bronce + Limpieza automática a Silver.
+    """Sistema de ETL - Extracción a Bronce + Limpieza con Notebook.
     
     Flujo automático:
     1. Extrae datos de PostgreSQL → Bronce (MinIO)
-    2. Limpia datos → Silver (MinIO)
+    2. Ejecuta notebook de limpieza → Silver (MinIO)
     3. Repite cada N segundos
     """
     
     def __init__(self, 
                  db_config: Optional[DatabaseConfig] = None,
                  minio_config: Optional[MinIOConfig] = None,
-                 extraction_interval: int = 300):
+                 extraction_interval: int = 300,
+                 notebook_path: str = "notebooks/templates/limpieza_template.ipynb",
+                 notebook_kpi_path: str = "notebooks/templates/generacion_KPI.ipynb"):
         """
         Inicializa sistema.
         
@@ -41,12 +52,15 @@ class ETLSystem:
             db_config: Configuración de BD (crea si es None)
             minio_config: Configuración de MinIO (crea si es None)
             extraction_interval: Segundos entre extracciones
+            notebook_path: Ruta al notebook de limpieza (Silver)
+            notebook_kpi_path: Ruta al notebook de KPIs (Gold)
         """
         self.db_config = db_config or DatabaseConfig()
         self.minio_config = minio_config or MinIOConfig()
         self.extraction_interval = extraction_interval
+        self.notebook_path = notebook_path
+        self.notebook_kpi_path = notebook_kpi_path
         self.pipeline = ETLPipeline(self.db_config, self.minio_config)
-        self.cleaner = DataCleaner(self.minio_config)
     
     def display_config(self) -> None:
         """Muestra configuración cargada."""
@@ -60,7 +74,7 @@ class ETLSystem:
     
     def run_cycle(self, cycle_num: int) -> bool:
         """
-        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza a Silver.
+        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza Silver + KPI Gold.
         
         Args:
             cycle_num: Número del ciclo
@@ -73,29 +87,79 @@ class ETLSystem:
         # Extracción a Bronce
         self.pipeline.process_batch()
         
-        # Limpieza a Silver
-        self._run_cleaning()
+        # Limpieza con Notebook (Silver)
+        self._run_notebook_cleaning()
+        
+        # Generación de KPIs (Gold)
+        self._run_notebook_kpi()
         
         return True
     
-    def _run_cleaning(self) -> None:
-        """Ejecuta limpieza automática de todas las tablas."""
-        print(f"\n[INFO] Iniciando limpieza automática...")
+    def _run_notebook_cleaning(self) -> bool:
+        """
+        Ejecuta el script de limpieza (Silver layer).
+        
+        Returns:
+            True si se ejecutó exitosamente
+        """
+        print(f"\n[INFO] Ejecutando limpieza Silver...")
         
         try:
-            # Tablas a limpiar (obtenidas del inspector)
-            from etl.extractors import TableInspector
-            from sqlalchemy import create_engine
+            script_path = Path(__file__).parent / "etl" / "scripts" / "silver_layer.py"
+            result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True, timeout=600)
             
-            engine = create_engine(self.db_config.connection_url)
-            with engine.connect() as connection:
-                inspector = TableInspector(connection)
-                tables = inspector.get_all_tables()
+            if result.returncode == 0:
+                if result.stdout:
+                    print(result.stdout)
+                print(f"[OK] Silver layer ejecutado exitosamente")
+                return True
+            else:
+                print(f"[ERROR] Fallo al ejecutar Silver layer")
+                if result.stderr:
+                    print(f"STDERR: {result.stderr}")
+                if result.stdout:
+                    print(f"STDOUT: {result.stdout}")
+                return False
             
-            for table_name in tables:
-                self.cleaner.clean_table(table_name)
+        except subprocess.TimeoutExpired:
+            print(f"[ERROR] Silver layer timeout (>600s)")
+            return False
         except Exception as e:
-            print(f"[ERROR] Error en limpieza automática: {e}")
+            print(f"[ERROR] Error ejecutando Silver: {e}")
+            return False
+    
+    def _run_notebook_kpi(self) -> bool:
+        """
+        Ejecuta el script de generación de KPIs (Gold layer).
+        
+        Returns:
+            True si se ejecutó exitosamente
+        """
+        print(f"\n[INFO] Ejecutando Gold KPI...")
+        
+        try:
+            script_path = Path(__file__).parent / "etl" / "scripts" / "gold_layer.py"
+            result = subprocess.run([sys.executable, str(script_path)], capture_output=True, text=True, timeout=600)
+            
+            if result.returncode == 0:
+                if result.stdout:
+                    print(result.stdout)
+                print(f"[OK] Gold layer ejecutado exitosamente")
+                return True
+            else:
+                print(f"[ERROR] Fallo al ejecutar Gold layer")
+                if result.stderr:
+                    print(f"STDERR: {result.stderr}")
+                if result.stdout:
+                    print(f"STDOUT: {result.stdout}")
+                return False
+            
+        except subprocess.TimeoutExpired:
+            print(f"[ERROR] Gold layer timeout (>600s)")
+            return False
+        except Exception as e:
+            print(f"[ERROR] Error ejecutando Gold: {e}")
+            return False
     
     def run_continuous(self) -> None:
         """Ejecuta sistema continuamente."""

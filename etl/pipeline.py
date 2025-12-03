@@ -61,6 +61,10 @@ class ETLPipeline:
                 return self._execute_batch(connection)
         except Exception as e:
             print(f"❌ ERROR CRÍTICO EN CONEXIÓN: {e}")
+            # Log encoding issues specifically
+            if "utf-8" in str(e) or "codec" in str(e):
+                print(f"   💡 SUGERENCIA: Problemas de encoding en PostgreSQL")
+                print(f"   Intente restaurar la BD con encoding UTF-8")
             return 0
     
     def _execute_batch(self, connection: Connection) -> int:
