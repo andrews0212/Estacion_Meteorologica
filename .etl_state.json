@@ -1,8 +1,8 @@
 {
   "sensor_readings": {
-    "last_value": "2025-10-23T12:11:04.612475+00:00",
+    "last_value": "2025-12-04T11:07:52.136186+00:00",
     "tracking_column": "timestamp",
-    "last_extracted_at": "2025-12-03T12:44:56.175207",
-    "rows_extracted": 97
+    "last_extracted_at": "2025-12-04T12:34:17.923002",
+    "rows_extracted": 6100
   }
 }
