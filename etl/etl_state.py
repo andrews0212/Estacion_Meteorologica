@@ -1,6 +1,8 @@
 """
 Gestor de estado ETL: Almacena y recupera estado de extracciones en archivo JSON.
-Reemplaza la tabla etl_control de la BD.
+
+Reemplaza la tabla ``etl_control`` tradicional con un archivo JSON local,
+simplificando la persistencia sin depender de la base de datos.
 """
 
 import json
@@ -11,7 +13,14 @@ from pathlib import Path
 
 
 class StateManager:
-    """Gestiona el estado de extracciones ETL usando archivo JSON local."""
+    """Gestor de estado ETL usando archivo JSON local.
+    
+    Responsabilidades:
+    - Cargar/guardar estado de extracciones en archivo `.etl_state.json`
+    - Recuperar último valor extraído por tabla
+    - Actualizar estado tras cada ciclo de extracción
+    - Limpiar/resetear estado completo si es necesario
+    """
     
     def __init__(self, state_file: str = ".etl_state.json"):
         """

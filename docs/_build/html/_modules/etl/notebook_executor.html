@@ -1,0 +1,240 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.notebook_executor &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">etl.notebook_executor</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for etl.notebook_executor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Ejecutor de notebooks Jupyter para transformaciones PySpark en ETL.</span>
+
+<span class="sd">Este módulo encapsula la ejecución de notebooks usando papermill, permitiendo</span>
+<span class="sd">parametrización, captura de salida y manejo de errores robusto.</span>
+
+<span class="sd">Ejemplo::</span>
+
+<span class="sd">    from etl.notebook_executor import NotebookExecutor</span>
+<span class="sd">    </span>
+<span class="sd">    executor = NotebookExecutor(&quot;notebooks/templates/limpieza_template.ipynb&quot;)</span>
+<span class="sd">    success = executor.execute(timeout=600)</span>
+<span class="sd">    if success:</span>
+<span class="sd">        print(&quot;Notebook ejecutado exitosamente&quot;)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">platform</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+
+<div class="viewcode-block" id="NotebookExecutor">
+<a class="viewcode-back" href="../../etl/notebook_executor.html#etl.notebook_executor.NotebookExecutor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NotebookExecutor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Ejecuta notebooks Jupyter como parte del pipeline ETL.&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="NotebookExecutor.__init__">
+<a class="viewcode-back" href="../../etl/notebook_executor.html#etl.notebook_executor.NotebookExecutor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">notebook_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">output_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el ejecutor de notebooks.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            notebook_path: Ruta absoluta o relativa al notebook (.ipynb)</span>
+<span class="sd">            output_path: Ruta para guardar el notebook ejecutado (opcional). </span>
+<span class="sd">                        Si es None, sobrescribe el notebook original.</span>
+<span class="sd">                        </span>
+<span class="sd">        Raises:</span>
+<span class="sd">            FileNotFoundError: Si el archivo notebook_path no existe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">notebook_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">output_path</span> <span class="k">else</span> <span class="kc">None</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Notebook no encontrado: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="NotebookExecutor.execute">
+<a class="viewcode-back" href="../../etl/notebook_executor.html#etl.notebook_executor.NotebookExecutor.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">600</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta el notebook usando papermill con parámetros opcionales.</span>
+<span class="sd">        </span>
+<span class="sd">        Workflow:</span>
+<span class="sd">        1. Limpia procesos JVM previos en Windows (para evitar conflictos con PySpark)</span>
+<span class="sd">        2. Construye comando papermill con parámetros</span>
+<span class="sd">        3. Ejecuta el notebook con timeout configurado</span>
+<span class="sd">        4. Captura salida estándar y de errores</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            parameters: Diccionario con parámetros a pasar al notebook </span>
+<span class="sd">                       (ej: {&quot;mode&quot;: &quot;production&quot;, &quot;batch_size&quot;: 1000})</span>
+<span class="sd">            timeout: Tiempo máximo de ejecución en segundos (default: 600s = 10 min)</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True si el notebook se ejecutó exitosamente (returncode == 0)</span>
+<span class="sd">            </span>
+<span class="sd">        Ejemplo::</span>
+<span class="sd">        </span>
+<span class="sd">            executor = NotebookExecutor(&quot;notebook.ipynb&quot;)</span>
+<span class="sd">            params = {&quot;table&quot;: &quot;sensor_readings&quot;, &quot;limit&quot;: 5000}</span>
+<span class="sd">            success = executor.execute(parameters=params, timeout=1200)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cleanup_jvm</span><span class="p">()</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">80</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[EJECUTANDO NOTEBOOK] </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[PARÁMETROS] </span><span class="si">{</span><span class="n">parameters</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;=&#39;</span><span class="o">*</span><span class="mi">80</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Comando base de papermill</span>
+            <span class="n">cmd</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">&quot;-m&quot;</span><span class="p">,</span> <span class="s2">&quot;papermill&quot;</span><span class="p">,</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="p">),</span>
+                <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_path</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_path</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="p">),</span>
+                <span class="s2">&quot;--kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;venv_meteo&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;--execution-timeout&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="p">]</span>
+            
+            <span class="c1"># Agregar parámetros nombrados si existen</span>
+            <span class="k">if</span> <span class="n">parameters</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">cmd</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s2">&quot;-p&quot;</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)])</span>
+            
+            <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">returncode</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[OK] Notebook ejecutado exitosamente&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[ERROR] El notebook falló con código: </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">returncode</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+                
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[ERROR] Error ejecutando notebook: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cleanup_jvm</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Limpia procesos JVM anteriores para evitar conflictos con PySpark.</span>
+<span class="sd">        </span>
+<span class="sd">        En Windows, los procesos java.exe pueden quedar en memoria después de</span>
+<span class="sd">        ejecuciones previas, causando problemas de puerto y memoria.</span>
+<span class="sd">        Este método los termina forzadamente (sin afectar procesos futuros).</span>
+<span class="sd">        </span>
+<span class="sd">        Solo se ejecuta en Windows; en Linux/Mac no es necesario.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">platform</span><span class="o">.</span><span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;Windows&#39;</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">system</span><span class="p">(</span><span class="s1">&#39;taskkill /F /IM java.exe 2&gt;nul &gt;nul || true&#39;</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

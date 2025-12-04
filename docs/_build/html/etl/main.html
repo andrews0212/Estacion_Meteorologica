@@ -1,0 +1,259 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>main - Punto de Entrada &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.pipeline - Pipeline Principal" href="pipeline.html" />
+    <link rel="prev" title="Guía de Uso" href="../guia_uso.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">main - Punto de Entrada</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#main.ETLSystem"><code class="docutils literal notranslate"><span class="pre">ETLSystem</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#main.ETLSystem.__init__"><code class="docutils literal notranslate"><span class="pre">ETLSystem.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#main.ETLSystem.display_config"><code class="docutils literal notranslate"><span class="pre">ETLSystem.display_config()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#main.ETLSystem.run_cycle"><code class="docutils literal notranslate"><span class="pre">ETLSystem.run_cycle()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#main.ETLSystem.run_continuous"><code class="docutils literal notranslate"><span class="pre">ETLSystem.run_continuous()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#main.insert_simulation_data"><code class="docutils literal notranslate"><span class="pre">insert_simulation_data()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="#main.main"><code class="docutils literal notranslate"><span class="pre">main()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">main - Punto de Entrada</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/main.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-main">
+<span id="main-punto-de-entrada"></span><h1>main - Punto de Entrada<a class="headerlink" href="#module-main" title="Link to this heading"></a></h1>
+<p>Punto de entrada del sistema ETL.</p>
+<p>Este módulo contiene la clase <a class="reference internal" href="#main.ETLSystem" title="main.ETLSystem"><code class="xref py py-class docutils literal notranslate"><span class="pre">ETLSystem</span></code></a> que orquesta el pipeline
+de extracción incremental y el procesamiento con notebooks PySpark.</p>
+<p>Flujo general:
+- Extrae datos de PostgreSQL usando <a class="reference internal" href="pipeline.html#etl.pipeline.ETLPipeline" title="etl.pipeline.ETLPipeline"><code class="xref py py-class docutils literal notranslate"><span class="pre">etl.pipeline.ETLPipeline</span></code></a>
+- Escribe resultados en Bronce (MinIO)
+- Ejecuta notebook de limpieza con PySpark → Silver
+- Ejecuta notebook de KPI con PySpark → Gold
+- Descarga Gold a carpeta file/ para Power BI</p>
+<dl class="simple">
+<dt>Ejecutar en modo continuo::</dt><dd><p>python main.py</p>
+</dd>
+</dl>
+<dl class="py class">
+<dt class="sig sig-object py" id="main.ETLSystem">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">ETLSystem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.database_config.DatabaseConfig" title="config.database_config.DatabaseConfig"><span class="pre">DatabaseConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraction_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notebook_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'notebooks/templates/limpieza_template.ipynb'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notebook_kpi_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'notebooks/templates/generacion_KPI.ipynb'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/main.html#ETLSystem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.ETLSystem" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Sistema automatizado de ETL con procesamiento PySpark en capas (Bronze-Silver-Gold).</p>
+<p>Orquesta el flujo completo de extracción, transformación y carga de datos:</p>
+<ol class="arabic simple">
+<li><p><strong>Extracción a Bronze</strong>: Descarga incremental desde PostgreSQL → MinIO</p></li>
+<li><p><strong>Transformación a Silver</strong>: Ejecuta notebook de limpieza (PySpark) → MinIO</p></li>
+<li><p><strong>Agregación a Gold</strong>: Ejecuta notebook de KPIs (PySpark) → MinIO</p></li>
+<li><p><strong>Descarga</strong>: Sincroniza archivos Gold a carpeta local (file/) para Power BI</p></li>
+<li><p><strong>Repetición</strong>: Ejecuta ciclos automáticos cada N segundos</p></li>
+</ol>
+<p>El sistema opera en modo continuo con manejo robusto de errores y reintentos.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="main.ETLSystem.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">db_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.database_config.DatabaseConfig" title="config.database_config.DatabaseConfig"><span class="pre">DatabaseConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extraction_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">300</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notebook_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'notebooks/templates/limpieza_template.ipynb'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">notebook_kpi_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'notebooks/templates/generacion_KPI.ipynb'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/main.html#ETLSystem.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.ETLSystem.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el sistema ETL con configuraciones opcionales.</p>
+<p>Si no se proporcionan configuraciones, se cargan automáticamente desde variables
+de entorno o valores por defecto.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>db_config</strong> – Configuración de PostgreSQL. Si es None, se carga automáticamente.</p></li>
+<li><p><strong>minio_config</strong> – Configuración de MinIO. Si es None, se carga automáticamente.</p></li>
+<li><p><strong>extraction_interval</strong> – Intervalo en segundos entre ciclos de extracción (default: 300s).</p></li>
+<li><p><strong>notebook_path</strong> – Ruta relativa al notebook de limpieza Silver.</p></li>
+<li><p><strong>notebook_kpi_path</strong> – Ruta relativa al notebook de generación de KPIs Gold.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="main.ETLSystem.display_config">
+<span class="sig-name descname"><span class="pre">display_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/main.html#ETLSystem.display_config"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.ETLSystem.display_config" title="Link to this definition"></a></dt>
+<dd><p>Muestra configuración cargada.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="main.ETLSystem.run_cycle">
+<span class="sig-name descname"><span class="pre">run_cycle</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cycle_num</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/main.html#ETLSystem.run_cycle"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.ETLSystem.run_cycle" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta un ciclo completo de ETL: Extracción → Limpieza → KPIs → Sincronización.</p>
+<p>Workflow del ciclo:
+1. Extrae datos nuevos desde PostgreSQL (Bronze)
+2. Ejecuta notebook de limpieza con PySpark (Silver)
+3. Ejecuta notebook de generación de KPIs (Gold)
+4. Descarga archivos a carpeta local para Power BI</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cycle_num</strong> – Número identificador del ciclo actual.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si el ciclo completó exitosamente (incluso con advertencias).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="main.ETLSystem.run_continuous">
+<span class="sig-name descname"><span class="pre">run_continuous</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/main.html#ETLSystem.run_continuous"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.ETLSystem.run_continuous" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta el sistema en modo continuo con ciclos automatizados.</p>
+<p>El sistema:
+- Muestra la configuración cargada
+- Ejecuta ciclos ETL repetidamente cada <cite>extraction_interval</cite> segundos
+- Maneja apagado limpio si el usuario presiona Ctrl+C
+- Registra el progreso con timestamps para monitoreo</p>
+<p>Runs indefinidamente hasta interrupción del usuario.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.insert_simulation_data">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">insert_simulation_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_records</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/main.html#insert_simulation_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.insert_simulation_data" title="Link to this definition"></a></dt>
+<dd><p>Inserta datos simulados realistas en la tabla sensor_readings de PostgreSQL.</p>
+<p>Genera registros con valores aleatorios que simulan lecturas de una estación
+meteorológica durante los últimos 30 días. Útil para pruebas del pipeline.</p>
+<p>Parámetros de datos generados:
+- <strong>temperatura</strong>: 15-35°C (rango típico)
+- <strong>humedad</strong>: 30-95% (rango relativo)
+- <strong>velocidad_viento</strong>: 0-25 km/h
+- <strong>presion</strong>: 990-1030 hPa (rango barométrico)
+- <strong>nivel_uv</strong>: 0-11 (escala UV)
+- <strong>pm25</strong>: 0-300 µg/m³ (concentración de partículas)
+- <strong>lluvia</strong>: 0-50 mm (precipitación)
+- <strong>vibracion</strong>: 0-10 Hz (frecuencia)</p>
+<p>El sistema inserta en batches de 100 registros para optimizar rendimiento.
+Los registros se distribuyen uniformemente en el período de 30 días.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>num_records</strong> – Cantidad de registros simulados a insertar (default: 1000).</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>DatabaseError</strong> – Si la tabla ‘sensor_readings’ no existe.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="main.main">
+<span class="sig-prename descclassname"><span class="pre">main.</span></span><span class="sig-name descname"><span class="pre">main</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/main.html#main"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#main.main" title="Link to this definition"></a></dt>
+<dd><p>Punto de entrada del programa.</p>
+<p>Modos de ejecución:
+- Sin argumentos: Ejecuta sistema ETL en modo continuo
+- “python main.py simulate”: Inserta 1000 registros de prueba
+- “python main.py simulate N”: Inserta N registros de prueba</p>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../guia_uso.html" class="btn btn-neutral float-left" title="Guía de Uso" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="pipeline.html" class="btn btn-neutral float-right" title="etl.pipeline - Pipeline Principal" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

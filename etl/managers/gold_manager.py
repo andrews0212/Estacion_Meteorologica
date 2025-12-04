@@ -1,43 +1,50 @@
-"""Gestor de la capa Gold y gestión de versiones.
+"""Gestor de capa Gold: KPIs y métricas agregadas.
 
-Este módulo implementa una estrategia simple de versiones (REPLACE) donde
-solo se mantiene la versión más reciente de cada tabla en el bucket Gold.
+Este módulo implementa GoldManager, especialización de LayerManager para trabajar
+con el bucket Gold que contiene KPIs y métricas agregadas calculadas con PySpark.
 
-Nota: Hereda de LayerManager para eliminar redundancia de código.
-
-Funciones principales:
-- listar versiones por tabla
-- obtener la versión más reciente
-- eliminar versiones antiguas
-- obtener estadísticas (tamaño total, número de versiones)
+Estrategia: **REPLACE**
+- Mantiene solo la versión más reciente de cada tabla
+- Elimina automáticamente versiones antiguas para optimizar espacio
 """
 
 from .layer_manager import LayerManager
 
 
 class GoldManager(LayerManager):
-    """Gestiona archivos en capa Gold - Limpia versiones antiguas.
+    """Gestor especial para la capa Gold: KPIs y métricas agregadas.
 
-    Hereda todas las funcionalidades de LayerManager configurando el sufijo
-    '-gold' para trabajar con el bucket meteo-gold.
-
-    Args:
-        minio_config: Instancia de configuración de MinIO con atributos
-            ``endpoint``, ``access_key``, ``secret_key`` y ``bucket``.
+    Hereda todas las funcionalidades de LayerManager, especializado para trabajar
+    con el bucket 'meteo-gold' que contiene KPIs, métricas agregadas y análisis
+    calculados con PySpark sobre los datos de Silver.
+    
+    La estrategia de versiones es REPLACE: solo mantiene la versión más reciente
+    de cada tabla para optimizar espacio de almacenamiento.
 
     Ejemplo::
 
         from config import MinIOConfig
         cfg = MinIOConfig()
         gm = GoldManager(cfg)
-        gm.limpiar_versiones_antiguas('metricas_kpi')
+        
+        # Listar versiones de una tabla
+        versiones = gm.obtener_versiones_tabla('metricas_kpi')
+        
+        # Obtener la más reciente
+        archivo = gm.obtener_archivo_reciente('metricas_kpi')
+        
+        # Limpiar versiones antiguas
+        eliminados = gm.limpiar_versiones_antiguas('metricas_kpi')
     """
     
     def __init__(self, minio_config):
         """
-        Inicializa el gestor de Gold.
+        Inicializa el gestor de la capa Gold.
         
         Args:
-            minio_config: Configuración de MinIO (MinIOConfig)
+            minio_config: Configuración de MinIO
+            
+        Note:
+            Configura automáticamente el bucket '-gold' según la configuración
         """
         super().__init__(minio_config, bucket_suffix='-gold')

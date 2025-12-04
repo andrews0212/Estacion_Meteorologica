@@ -1,0 +1,183 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.notebook_executor - Ejecutor de Notebooks &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.notebook_executor - Ejecutor de Notebooks</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/notebook_executor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.notebook_executor">
+<span id="etl-notebook-executor-ejecutor-de-notebooks"></span><h1>etl.notebook_executor - Ejecutor de Notebooks<a class="headerlink" href="#module-etl.notebook_executor" title="Link to this heading"></a></h1>
+<p>Ejecutor de notebooks Jupyter para transformaciones PySpark en ETL.</p>
+<p>Este módulo encapsula la ejecución de notebooks usando papermill, permitiendo
+parametrización, captura de salida y manejo de errores robusto.</p>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">etl.notebook_executor</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotebookExecutor</span>
+
+<span class="n">executor</span> <span class="o">=</span> <span class="n">NotebookExecutor</span><span class="p">(</span><span class="s2">&quot;notebooks/templates/limpieza_template.ipynb&quot;</span><span class="p">)</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Notebook ejecutado exitosamente&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.notebook_executor.NotebookExecutor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.notebook_executor.</span></span><span class="sig-name descname"><span class="pre">NotebookExecutor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">notebook_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/notebook_executor.html#NotebookExecutor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.notebook_executor.NotebookExecutor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Ejecuta notebooks Jupyter como parte del pipeline ETL.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.notebook_executor.NotebookExecutor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">notebook_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/notebook_executor.html#NotebookExecutor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.notebook_executor.NotebookExecutor.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el ejecutor de notebooks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>notebook_path</strong> – Ruta absoluta o relativa al notebook (.ipynb)</p></li>
+<li><p><strong>output_path</strong> – Ruta para guardar el notebook ejecutado (opcional).
+Si es None, sobrescribe el notebook original.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – Si el archivo notebook_path no existe.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.notebook_executor.NotebookExecutor.execute">
+<span class="sig-name descname"><span class="pre">execute</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">600</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/notebook_executor.html#NotebookExecutor.execute"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.notebook_executor.NotebookExecutor.execute" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta el notebook usando papermill con parámetros opcionales.</p>
+<p>Workflow:
+1. Limpia procesos JVM previos en Windows (para evitar conflictos con PySpark)
+2. Construye comando papermill con parámetros
+3. Ejecuta el notebook con timeout configurado
+4. Captura salida estándar y de errores</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>parameters</strong> – Diccionario con parámetros a pasar al notebook
+(ej: {“mode”: “production”, “batch_size”: 1000})</p></li>
+<li><p><strong>timeout</strong> – Tiempo máximo de ejecución en segundos (default: 600s = 10 min)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si el notebook se ejecutó exitosamente (returncode == 0)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">executor</span> <span class="o">=</span> <span class="n">NotebookExecutor</span><span class="p">(</span><span class="s2">&quot;notebook.ipynb&quot;</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;table&quot;</span><span class="p">:</span> <span class="s2">&quot;sensor_readings&quot;</span><span class="p">,</span> <span class="s2">&quot;limit&quot;</span><span class="p">:</span> <span class="mi">5000</span><span class="p">}</span>
+<span class="n">success</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">params</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">1200</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,559 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>main &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../etl/main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">main</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for main</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python3</span>
+<span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;Punto de entrada del sistema ETL.</span>
+
+<span class="sd">Este módulo contiene la clase :class:`ETLSystem` que orquesta el pipeline</span>
+<span class="sd">de extracción incremental y el procesamiento con notebooks PySpark.</span>
+
+<span class="sd">Flujo general:</span>
+<span class="sd">- Extrae datos de PostgreSQL usando :class:`etl.pipeline.ETLPipeline`</span>
+<span class="sd">- Escribe resultados en Bronce (MinIO)</span>
+<span class="sd">- Ejecuta notebook de limpieza con PySpark → Silver</span>
+<span class="sd">- Ejecuta notebook de KPI con PySpark → Gold</span>
+<span class="sd">- Descarga Gold a carpeta file/ para Power BI</span>
+
+<span class="sd">Ejecutar en modo continuo::</span>
+<span class="sd">    python main.py</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">minio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Minio</span>
+
+<span class="c1"># Configurar UTF-8 en Windows</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;win32&#39;</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PYTHONIOENCODING&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;utf-8&#39;</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">reconfigure</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatabaseConfig</span><span class="p">,</span> <span class="n">MinIOConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">ETLPipeline</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.notebook_executor</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotebookExecutor</span>
+
+
+<div class="viewcode-block" id="ETLSystem">
+<a class="viewcode-back" href="../etl/main.html#main.ETLSystem">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ETLSystem</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sistema automatizado de ETL con procesamiento PySpark en capas (Bronze-Silver-Gold).</span>
+<span class="sd">    </span>
+<span class="sd">    Orquesta el flujo completo de extracción, transformación y carga de datos:</span>
+<span class="sd">    </span>
+<span class="sd">    1. **Extracción a Bronze**: Descarga incremental desde PostgreSQL → MinIO</span>
+<span class="sd">    2. **Transformación a Silver**: Ejecuta notebook de limpieza (PySpark) → MinIO</span>
+<span class="sd">    3. **Agregación a Gold**: Ejecuta notebook de KPIs (PySpark) → MinIO</span>
+<span class="sd">    4. **Descarga**: Sincroniza archivos Gold a carpeta local (file/) para Power BI</span>
+<span class="sd">    5. **Repetición**: Ejecuta ciclos automáticos cada N segundos</span>
+<span class="sd">    </span>
+<span class="sd">    El sistema opera en modo continuo con manejo robusto de errores y reintentos.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ETLSystem.__init__">
+<a class="viewcode-back" href="../etl/main.html#main.ETLSystem.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> 
+                 <span class="n">db_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DatabaseConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">minio_config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MinIOConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+                 <span class="n">extraction_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+                 <span class="n">notebook_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;notebooks/templates/limpieza_template.ipynb&quot;</span><span class="p">,</span>
+                 <span class="n">notebook_kpi_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;notebooks/templates/generacion_KPI.ipynb&quot;</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el sistema ETL con configuraciones opcionales.</span>
+<span class="sd">        </span>
+<span class="sd">        Si no se proporcionan configuraciones, se cargan automáticamente desde variables</span>
+<span class="sd">        de entorno o valores por defecto.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            db_config: Configuración de PostgreSQL. Si es None, se carga automáticamente.</span>
+<span class="sd">            minio_config: Configuración de MinIO. Si es None, se carga automáticamente.</span>
+<span class="sd">            extraction_interval: Intervalo en segundos entre ciclos de extracción (default: 300s).</span>
+<span class="sd">            notebook_path: Ruta relativa al notebook de limpieza Silver.</span>
+<span class="sd">            notebook_kpi_path: Ruta relativa al notebook de generación de KPIs Gold.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_config</span> <span class="o">=</span> <span class="n">db_config</span> <span class="ow">or</span> <span class="n">DatabaseConfig</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span> <span class="o">=</span> <span class="n">minio_config</span> <span class="ow">or</span> <span class="n">MinIOConfig</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">extraction_interval</span> <span class="o">=</span> <span class="n">extraction_interval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span> <span class="o">=</span> <span class="n">notebook_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">notebook_kpi_path</span> <span class="o">=</span> <span class="n">notebook_kpi_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">ETLPipeline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">db_config</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ETLSystem.display_config">
+<a class="viewcode-back" href="../etl/main.html#main.ETLSystem.display_config">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">display_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Muestra configuración cargada.&quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;INICIANDO SISTEMA ETL + LIMPIEZA AUTOMATICA&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">db_config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[OK] Intervalo de extracción: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extraction_interval</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span></div>
+
+    
+<div class="viewcode-block" id="ETLSystem.run_cycle">
+<a class="viewcode-back" href="../etl/main.html#main.ETLSystem.run_cycle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cycle_num</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta un ciclo completo de ETL: Extracción → Limpieza → KPIs → Sincronización.</span>
+<span class="sd">        </span>
+<span class="sd">        Workflow del ciclo:</span>
+<span class="sd">        1. Extrae datos nuevos desde PostgreSQL (Bronze)</span>
+<span class="sd">        2. Ejecuta notebook de limpieza con PySpark (Silver)</span>
+<span class="sd">        3. Ejecuta notebook de generación de KPIs (Gold)</span>
+<span class="sd">        4. Descarga archivos a carpeta local para Power BI</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            cycle_num: Número identificador del ciclo actual.</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True si el ciclo completó exitosamente (incluso con advertencias).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- CICLO </span><span class="si">{</span><span class="n">cycle_num</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># Extracción a Bronce</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">process_batch</span><span class="p">()</span>
+        
+        <span class="c1"># Limpieza y KPIs con Notebooks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_notebooks</span><span class="p">()</span>
+        
+        <span class="c1"># Descargar Gold a carpeta file/ para Power BI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_download_gold_for_powerbi</span><span class="p">()</span>
+        
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_notebooks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta notebooks de transformación PySpark en secuencia.</span>
+<span class="sd">        </span>
+<span class="sd">        Ejecuta:</span>
+<span class="sd">        1. **Notebook Silver**: Limpieza y transformación de datos Bronze</span>
+<span class="sd">        2. **Notebook Gold**: Generación de KPIs y métricas agregadas</span>
+<span class="sd">        </span>
+<span class="sd">        Ambos notebooks tienen timeout de 600s (10 minutos). Si alguno falla,</span>
+<span class="sd">        se registra una advertencia pero el ciclo continúa.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True si ambos completaron sin errores críticos.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">notebooks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_path</span><span class="p">,</span> <span class="s2">&quot;Silver&quot;</span><span class="p">),</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">notebook_kpi_path</span><span class="p">,</span> <span class="s2">&quot;Gold&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+        
+        <span class="k">for</span> <span class="n">notebook_rel_path</span><span class="p">,</span> <span class="n">layer_name</span> <span class="ow">in</span> <span class="n">notebooks</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">notebook_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="n">notebook_rel_path</span>
+                <span class="n">executor</span> <span class="o">=</span> <span class="n">NotebookExecutor</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">notebook_path</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">executor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">timeout</span><span class="o">=</span><span class="mi">600</span><span class="p">):</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[AVISO] Notebook </span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s2"> retornó error, continuando...&quot;</span><span class="p">)</span>
+                    
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[ERROR] Error ejecutando notebook </span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        
+        <span class="k">return</span> <span class="kc">True</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_download_gold_for_powerbi</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Descarga archivos transformados de MinIO a carpeta local para análisis en Power BI.</span>
+<span class="sd">        </span>
+<span class="sd">        Archivos descargados:</span>
+<span class="sd">        - **datos_principales_silver.csv**: Datos limpios después de transformación Silver</span>
+<span class="sd">        - **metricas_kpi_gold.csv**: Métricas y KPIs agregados de la capa Gold</span>
+<span class="sd">        </span>
+<span class="sd">        Los archivos se guardan en la carpeta `file/` para fácil acceso con Power BI Desktop.</span>
+<span class="sd">        Incluye reintentos automáticos (máx 3 intentos por archivo) para mayor confiabilidad.</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            bool: True si al menos uno de los archivos se descargó exitosamente.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Descargando archivos para Power BI...&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">os</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">os_module</span>
+            
+            <span class="c1"># Crear cliente MinIO</span>
+            <span class="n">client</span> <span class="o">=</span> <span class="n">Minio</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="o">.</span><span class="n">endpoint</span><span class="p">,</span>
+                <span class="n">access_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="o">.</span><span class="n">access_key</span><span class="p">,</span>
+                <span class="n">secret_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="o">.</span><span class="n">secret_key</span><span class="p">,</span>
+                <span class="n">secure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="o">.</span><span class="n">secure</span>
+            <span class="p">)</span>
+            
+            <span class="c1"># Crear carpeta file/ si no existe</span>
+            <span class="n">file_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)</span><span class="o">.</span><span class="n">parent</span> <span class="o">/</span> <span class="s2">&quot;file&quot;</span>
+            <span class="n">file_dir</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            
+            <span class="c1"># Archivos a descargar: (bucket, archivo_remoto, nombre_local)</span>
+            <span class="n">descargas</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="p">(</span><span class="s2">&quot;meteo-silver&quot;</span><span class="p">,</span> <span class="s2">&quot;datos_principales_silver.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;datos_principales_silver.csv&quot;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">&quot;meteo-gold&quot;</span><span class="p">,</span> <span class="s2">&quot;metricas_kpi_gold.csv&quot;</span><span class="p">,</span> <span class="s2">&quot;metricas_kpi_gold.csv&quot;</span><span class="p">),</span>
+            <span class="p">]</span>
+            
+            <span class="c1"># Descargar cada archivo</span>
+            <span class="n">descargas_exitosas</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">bucket</span><span class="p">,</span> <span class="n">archivo_remoto</span><span class="p">,</span> <span class="n">archivo_local</span> <span class="ow">in</span> <span class="n">descargas</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">local_path</span> <span class="o">=</span> <span class="n">file_dir</span> <span class="o">/</span> <span class="n">archivo_local</span>
+                    
+                    <span class="c1"># Eliminar archivo anterior si existe (para forzar actualización)</span>
+                    <span class="k">if</span> <span class="n">local_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+                        <span class="n">os_module</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
+                    
+                    <span class="c1"># Intentar descargar con reintentos</span>
+                    <span class="n">max_intentos</span> <span class="o">=</span> <span class="mi">3</span>
+                    <span class="k">for</span> <span class="n">intento</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_intentos</span><span class="p">):</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">client</span><span class="o">.</span><span class="n">fget_object</span><span class="p">(</span><span class="n">bucket</span><span class="p">,</span> <span class="n">archivo_remoto</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">local_path</span><span class="p">))</span>
+                            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[OK] </span><span class="si">{</span><span class="n">archivo_local</span><span class="si">}</span><span class="s2"> descargado desde </span><span class="si">{</span><span class="n">bucket</span><span class="si">}</span><span class="s2">/&quot;</span><span class="p">)</span>
+                            <span class="n">descargas_exitosas</span> <span class="o">+=</span> <span class="mi">1</span>
+                            <span class="k">break</span>
+                        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e_intento</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">intento</span> <span class="o">&lt;</span> <span class="n">max_intentos</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[REINTENTANDO] </span><span class="si">{</span><span class="n">archivo_local</span><span class="si">}</span><span class="s2"> (intento </span><span class="si">{</span><span class="n">intento</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">max_intentos</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">raise</span> <span class="n">e_intento</span>
+                    
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[AVISO] No se pudo descargar </span><span class="si">{</span><span class="n">archivo_local</span><span class="si">}</span><span class="s2"> de </span><span class="si">{</span><span class="n">bucket</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">continue</span>
+            
+            <span class="k">if</span> <span class="n">descargas_exitosas</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[OK] </span><span class="si">{</span><span class="n">descargas_exitosas</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">descargas</span><span class="p">)</span><span class="si">}</span><span class="s2"> archivos descargados exitosamente&quot;</span><span class="p">)</span>
+            
+            <span class="k">return</span> <span class="kc">True</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[AVISO] Error descargando archivos: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    
+<div class="viewcode-block" id="ETLSystem.run_continuous">
+<a class="viewcode-back" href="../etl/main.html#main.ETLSystem.run_continuous">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta el sistema en modo continuo con ciclos automatizados.</span>
+<span class="sd">        </span>
+<span class="sd">        El sistema:</span>
+<span class="sd">        - Muestra la configuración cargada</span>
+<span class="sd">        - Ejecuta ciclos ETL repetidamente cada `extraction_interval` segundos</span>
+<span class="sd">        - Maneja apagado limpio si el usuario presiona Ctrl+C</span>
+<span class="sd">        - Registra el progreso con timestamps para monitoreo</span>
+<span class="sd">        </span>
+<span class="sd">        Runs indefinidamente hasta interrupción del usuario.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">display_config</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Presione Ctrl+C para detener</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="n">cycle_num</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">cycle_num</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">run_cycle</span><span class="p">(</span><span class="n">cycle_num</span><span class="p">)</span>
+                
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[INFO] Esperando </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">extraction_interval</span><span class="si">}</span><span class="s2">s...&quot;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">extraction_interval</span><span class="p">)</span>
+        
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_handle_shutdown</span><span class="p">()</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_handle_shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Maneja el apagado limpio del sistema cuando el usuario presiona Ctrl+C.</span>
+<span class="sd">        </span>
+<span class="sd">        Imprime mensaje de despedida y detiene los ciclos de forma ordenada.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;DETENIENDO SISTEMA&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[INFO] Pipeline detenido por el usuario&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[INFO] Hasta luego! no se extrajo nada&quot;</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="insert_simulation_data">
+<a class="viewcode-back" href="../etl/main.html#main.insert_simulation_data">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">insert_simulation_data</span><span class="p">(</span><span class="n">num_records</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Inserta datos simulados realistas en la tabla sensor_readings de PostgreSQL.</span>
+<span class="sd">    </span>
+<span class="sd">    Genera registros con valores aleatorios que simulan lecturas de una estación</span>
+<span class="sd">    meteorológica durante los últimos 30 días. Útil para pruebas del pipeline.</span>
+<span class="sd">    </span>
+<span class="sd">    Parámetros de datos generados:</span>
+<span class="sd">    - **temperatura**: 15-35°C (rango típico)</span>
+<span class="sd">    - **humedad**: 30-95% (rango relativo)</span>
+<span class="sd">    - **velocidad_viento**: 0-25 km/h</span>
+<span class="sd">    - **presion**: 990-1030 hPa (rango barométrico)</span>
+<span class="sd">    - **nivel_uv**: 0-11 (escala UV)</span>
+<span class="sd">    - **pm25**: 0-300 µg/m³ (concentración de partículas)</span>
+<span class="sd">    - **lluvia**: 0-50 mm (precipitación)</span>
+<span class="sd">    - **vibracion**: 0-10 Hz (frecuencia)</span>
+<span class="sd">    </span>
+<span class="sd">    El sistema inserta en batches de 100 registros para optimizar rendimiento.</span>
+<span class="sd">    Los registros se distribuyen uniformemente en el período de 30 días.</span>
+<span class="sd">    </span>
+<span class="sd">    Args:</span>
+<span class="sd">        num_records: Cantidad de registros simulados a insertar (default: 1000).</span>
+<span class="sd">        </span>
+<span class="sd">    Raises:</span>
+<span class="sd">        DatabaseError: Si la tabla &#39;sensor_readings&#39; no existe.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_engine</span><span class="p">,</span> <span class="n">text</span>
+    
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;INSERTANDO </span><span class="si">{</span><span class="n">num_records</span><span class="si">}</span><span class="s2"> REGISTROS DE SIMULACIÓN&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># Configuración de BD</span>
+        <span class="n">db_config</span> <span class="o">=</span> <span class="n">DatabaseConfig</span><span class="p">()</span>
+        <span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="n">db_config</span><span class="o">.</span><span class="n">connection_url</span><span class="p">)</span>
+        
+        <span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+            <span class="c1"># PASO 1: Verificar que tabla existe</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT EXISTS (</span>
+<span class="s2">                    SELECT FROM information_schema.tables </span>
+<span class="s2">                    WHERE table_name = &#39;sensor_readings&#39;</span>
+<span class="s2">                )</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">))</span>
+            
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar</span><span class="p">():</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;[ERROR] Tabla &#39;sensor_readings&#39; no existe&quot;</span><span class="p">)</span>
+                <span class="k">return</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[OK] Tabla &#39;sensor_readings&#39; encontrada</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># PASO 2: Generar datos simulados realistas</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[INFO] Generando </span><span class="si">{</span><span class="n">num_records</span><span class="si">}</span><span class="s2"> registros aleatorios...&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># Distribuir registros en los últimos 30 días</span>
+            <span class="n">base_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span> <span class="o">-</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">days</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+            <span class="n">registros</span> <span class="o">=</span> <span class="p">[]</span>
+            
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_records</span><span class="p">):</span>
+                <span class="n">fecha</span> <span class="o">=</span> <span class="n">base_time</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+                
+                <span class="c1"># Generar valores aleatorios dentro de rangos realistas</span>
+                <span class="n">registro</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s1">&#39;timestamp&#39;</span><span class="p">:</span> <span class="n">fecha</span><span class="p">,</span>
+                    <span class="s1">&#39;temperatura&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">35</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>        <span class="c1"># 15-35°C</span>
+                    <span class="s1">&#39;humedad&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">95</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>             <span class="c1"># 30-95%</span>
+                    <span class="s1">&#39;velocidad_viento&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>     <span class="c1"># 0-25 km/h</span>
+                    <span class="s1">&#39;presion&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">990</span><span class="p">,</span> <span class="mi">1030</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>          <span class="c1"># 990-1030 hPa</span>
+                    <span class="s1">&#39;nivel_uv&#39;</span><span class="p">:</span> <span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span>                       <span class="c1"># 0-11 (escala UV)</span>
+                    <span class="s1">&#39;pm25&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>                <span class="c1"># 0-300 µg/m³</span>
+                    <span class="s1">&#39;lluvia&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>               <span class="c1"># 0-50 mm</span>
+                    <span class="s1">&#39;vibracion&#39;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="mi">2</span><span class="p">),</span>            <span class="c1"># 0-10 Hz</span>
+                <span class="p">}</span>
+                <span class="n">registros</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">registro</span><span class="p">)</span>
+            
+            <span class="c1"># PASO 3: Insertar en batches para optimizar rendimiento</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">100</span>
+            <span class="n">total_insertados</span> <span class="o">=</span> <span class="mi">0</span>
+            
+            <span class="k">for</span> <span class="n">batch_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">registros</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">registros</span><span class="p">[</span><span class="n">batch_num</span><span class="p">:</span><span class="n">batch_num</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+                
+                <span class="c1"># Construir multi-value INSERT dinámicamente para mejor rendimiento</span>
+                <span class="c1"># Genera: (%(timestamp_0)s, ...), (%(timestamp_1)s, ...), etc.</span>
+                <span class="n">placeholders</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                    <span class="sa">f</span><span class="s2">&quot;(%(timestamp_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(temperatura_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(humedad_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;%(velocidad_viento_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(presion_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(nivel_uv_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;%(pm25_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(lluvia_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s, %(vibracion_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">)s)&quot;</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+                <span class="p">])</span>
+                
+                <span class="c1"># Preparar diccionario de parámetros nombrados para SQLAlchemy</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">reg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">reg</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">params</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                
+                <span class="n">sql</span> <span class="o">=</span> <span class="n">text</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                    INSERT INTO sensor_readings </span>
+<span class="s2">                    (timestamp, temperatura, humedad, velocidad_viento, presion, </span>
+<span class="s2">                     nivel_uv, pm25, lluvia, vibracion)</span>
+<span class="s2">                    VALUES </span><span class="si">{</span><span class="n">placeholders</span><span class="si">}</span>
+<span class="s2">                    ON CONFLICT DO NOTHING</span>
+<span class="s2">                &quot;&quot;&quot;</span><span class="p">)</span>
+                
+                <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+                <span class="n">total_insertados</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+                
+                <span class="n">porcentaje</span> <span class="o">=</span> <span class="p">(</span><span class="n">total_insertados</span> <span class="o">/</span> <span class="n">num_records</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[...] Progreso: </span><span class="si">{</span><span class="n">total_insertados</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">num_records</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">porcentaje</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%)&quot;</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\r</span><span class="s1">&#39;</span><span class="p">)</span>
+            
+            <span class="c1"># Confirmar transacción</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+            
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[OK] Insertados </span><span class="si">{</span><span class="n">total_insertados</span><span class="si">}</span><span class="s2"> registros simulados&quot;</span><span class="p">)</span>
+            
+            <span class="c1"># VERIFICACIÓN: Confirmar cantidad total en tabla</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">text</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM sensor_readings&quot;</span><span class="p">))</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scalar</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[OK] Total de registros en tabla sensor_readings: </span><span class="si">{</span><span class="n">total</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;✅ SIMULACIÓN COMPLETADA&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;=&quot;</span> <span class="o">*</span> <span class="mi">80</span><span class="p">)</span>
+        
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">[ERROR] Error insertando datos: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">traceback</span>
+        <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="main">
+<a class="viewcode-back" href="../etl/main.html#main.main">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Punto de entrada del programa.</span>
+<span class="sd">    </span>
+<span class="sd">    Modos de ejecución:</span>
+<span class="sd">    - Sin argumentos: Ejecuta sistema ETL en modo continuo</span>
+<span class="sd">    - &quot;python main.py simulate&quot;: Inserta 1000 registros de prueba</span>
+<span class="sd">    - &quot;python main.py simulate N&quot;: Inserta N registros de prueba</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+    
+    <span class="c1"># Procesar argumentos de línea de comandos</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;simulate&quot;</span><span class="p">:</span>
+            <span class="c1"># MODO SIMULACIÓN: Generar datos de prueba</span>
+            <span class="n">num_registros</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="mi">1000</span>
+            <span class="n">insert_simulation_data</span><span class="p">(</span><span class="n">num_registros</span><span class="p">)</span>
+            <span class="k">return</span>
+    
+    <span class="c1"># MODO NORMAL: Ejecutar sistema ETL continuo</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">ETLSystem</span><span class="p">(</span><span class="n">extraction_interval</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span>
+    <span class="n">system</span><span class="o">.</span><span class="n">run_continuous</span><span class="p">()</span></div>
+
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

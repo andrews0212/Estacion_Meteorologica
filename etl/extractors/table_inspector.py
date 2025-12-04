@@ -1,4 +1,10 @@
-"""Inspección de estructuras de tablas en PostgreSQL."""
+"""Inspección de estructura de tablas en PostgreSQL.
+
+Proporciona funcionalidad para:
+- Obtener lista de todas las tablas
+- Inspeccionar columnas y tipos de datos
+- Detectar automáticamente la mejor columna para rastreo incremental
+"""
 
 from typing import List, Tuple, Optional
 from sqlalchemy import Connection
@@ -6,7 +12,11 @@ from etl.utils import DatabaseUtils, TableQueryBuilder
 
 
 class TrackingColumnDetector:
-    """Detecta automáticamente la mejor columna para rastreo."""
+    """Detector automático de columnas para rastreo incremental.
+    
+    Busca inteligentemente la mejor columna para usar en extracción incremental,
+    siguiendo orden de preferencia: timestamp > ID primario > columna 'id'.
+    """
     
     # Prioridad 1: Columnas timestamp
     TIMESTAMP_CANDIDATES = ['created_at', 'updated_at', 'timestamp', 'fecha_registro', 'last_update']
@@ -26,15 +36,20 @@ class TrackingColumnDetector:
                connection: Connection,
                table_name: str) -> Optional[Tuple[str, str]]:
         """
-        Detecta mejor columna para rastreo.
+        Detecta la mejor columna para rastreo incremental.
         
-        Prioridades:
-        1. Timestamp (created_at, updated_at, etc.)
-        2. PRIMARY KEY numérico
+        Prioridades (en orden):
+        1. Timestamp (created_at, updated_at, timestamp, etc.)
+        2. Clave primaria numérica (serial, integer, etc.)
         3. Columna 'id' numérica
         
+        Args:
+            columns: Lista de (nombre_columna, tipo_datos)
+            connection: Conexión a base de datos para consultar metadatos
+            table_name: Nombre de la tabla
+            
         Returns:
-            (column_name, column_type) o None
+            tuple: (nombre_columna, tipo_rastreo) o None si no detecta
         """
         # 1. Buscar timestamp
         for col_name, col_type in columns:
@@ -67,23 +82,29 @@ class TrackingColumnDetector:
 
 
 class TableInspector:
-    """Inspecciona estructura de tablas PostgreSQL."""
+    """Inspector de estructura de tablas PostgreSQL.
+    
+    Proporciona métodos para explorar:
+    - Lista de tablas disponibles
+    - Columnas y tipos de datos
+    - Detección automática de columna de rastreo
+    """
     
     def __init__(self, connection: Connection):
         """
-        Inicializa inspector.
+        Inicializa el inspector.
         
         Args:
-            connection: Conexión a PostgreSQL
+            connection: Conexión SQLAlchemy activa a PostgreSQL
         """
         self.connection = connection
     
     def get_all_tables(self) -> List[str]:
         """
-        Obtiene lista de todas las tablas.
+        Obtiene lista de todas las tablas en esquema 'public'.
         
         Returns:
-            Lista de nombres de tablas
+            List[str]: Nombres de tablas
         """
         tables = DatabaseUtils.fetch_all(
             self.connection,
@@ -93,23 +114,26 @@ class TableInspector:
     
     def get_columns(self, table_name: str) -> List[Tuple[str, str]]:
         """
-        Obtiene columnas con tipos de datos.
+        Obtiene columnas de una tabla con sus tipos de datos.
         
         Args:
             table_name: Nombre de la tabla
             
         Returns:
-            Lista de (column_name, data_type)
+            List[Tuple]: Lista de (nombre_columna, tipo_dato)
         """
         query, params = TableQueryBuilder.get_columns_query(table_name)
         return DatabaseUtils.fetch_all(self.connection, query, params)
     
     def detect_tracking_column(self, table_name: str) -> Tuple[Optional[str], Optional[str]]:
         """
-        Detecta mejor columna para rastreo.
+        Detecta automáticamente la mejor columna para rastreo incremental.
         
+        Args:
+            table_name: Nombre de la tabla
+            
         Returns:
-            (column_name, column_type) o (None, None)
+            Tuple: (nombre_columna, tipo) o (None, None) si no detecta
         """
         columns = self.get_columns(table_name)
         result = TrackingColumnDetector.detect(columns, self.connection, table_name)

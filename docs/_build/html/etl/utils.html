@@ -1,0 +1,479 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.utils - Utilidades &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.control - Control y Estado" href="control.html" />
+    <link rel="prev" title="etl.uploaders - Cargadores a MinIO" href="uploaders.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.utils - Utilidades</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils.execute_query"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils.execute_query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils.fetch_one"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils.fetch_one()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils.fetch_all"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils.fetch_all()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils.fetch_scalar"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils.fetch_scalar()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.DatabaseUtils.execute_and_commit"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils.execute_and_commit()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_LIST_TABLES"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.QUERY_LIST_TABLES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_COLUMNS"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.QUERY_GET_COLUMNS</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_PRIMARY_KEY"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.QUERY_GET_PRIMARY_KEY</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.get_list_tables_query"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.get_list_tables_query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.get_columns_query"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.get_columns_query()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.db_utils.TableQueryBuilder.get_primary_key_query"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder.get_primary_key_query()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils"><code class="docutils literal notranslate"><span class="pre">MinIOUtils</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.__init__"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.crear_bucket_si_no_existe"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.crear_bucket_si_no_existe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.obtener_archivo_reciente_csv"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.obtener_archivo_reciente_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.descargar_csv"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.descargar_csv()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.subir_dataframe"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.subir_dataframe()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.utils.minio_utils.MinIOUtils.listar_archivos_csv"><code class="docutils literal notranslate"><span class="pre">MinIOUtils.listar_archivos_csv()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.utils - Utilidades</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/utils.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.utils.db_utils">
+<span id="etl-utils-utilidades"></span><h1>etl.utils - Utilidades<a class="headerlink" href="#module-etl.utils.db_utils" title="Link to this heading"></a></h1>
+<p>Utilidades para operaciones de base de datos y construcción de queries SQL.</p>
+<p>Encapsula operaciones comunes de ejecución de queries y construcción de sentencias SQL
+usadas por el pipeline ETL para inspección de tablas y extracción incremental.</p>
+<p>Proporciona:
+- Ejecución de queries con manejo robusto de errores
+- Métodos para fetch (uno, todos, escalar)
+- Constructor de queries reutilizables para operaciones típicas</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.utils.db_utils.</span></span><span class="sig-name descname"><span class="pre">DatabaseUtils</span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Métodos utilitarios reutilizables para operaciones de base de datos.</p>
+<p>Wrapper sobre SQLAlchemy que proporciona:
+- Ejecución de queries con parámetros nombrados
+- Métodos fetch convenientes (uno, todos, escalar)
+- Manejo de errores y trazas para debugging</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.execute_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.execute_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.execute_query" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta una query SQL y retorna resultado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> – Query SQL con parámetros nombrados (formato :nombre)</p></li>
+<li><p><strong>params</strong> – Diccionario con valores de parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CursorResult con los resultados</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>Exception</strong> – Si hay error en ejecución de query</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_one">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_one</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_one"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_one" title="Link to this definition"></a></dt>
+<dd><p>Obtiene una única fila.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> – Query SQL</p></li>
+<li><p><strong>params</strong> – Diccionario de parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Primera fila o None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_all">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_all</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_all"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_all" title="Link to this definition"></a></dt>
+<dd><p>Obtiene todas las filas del resultado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> – Query SQL</p></li>
+<li><p><strong>params</strong> – Diccionario de parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de tuplas (filas)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.fetch_scalar">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">fetch_scalar</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.fetch_scalar"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.fetch_scalar" title="Link to this definition"></a></dt>
+<dd><p>Obtiene un valor escalar (primera columna de primera fila).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> – Query SQL</p></li>
+<li><p><strong>params</strong> – Diccionario de parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Valor escalar o None</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Any | None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.DatabaseUtils.execute_and_commit">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_and_commit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#DatabaseUtils.execute_and_commit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.DatabaseUtils.execute_and_commit" title="Link to this definition"></a></dt>
+<dd><p>Ejecuta query de modificación y confirma los cambios.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa</p></li>
+<li><p><strong>query</strong> – Query SQL (INSERT, UPDATE, DELETE)</p></li>
+<li><p><strong>params</strong> – Diccionario de parámetros</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cantidad de filas afectadas</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.utils.db_utils.</span></span><span class="sig-name descname"><span class="pre">TableQueryBuilder</span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Constructor de queries SQL comunes para operaciones con tablas.</p>
+<p>Proporciona métodos estáticos para construir queries SQL reutilizables
+para inspección de estructura de tablas en PostgreSQL.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_LIST_TABLES">
+<span class="sig-name descname"><span class="pre">QUERY_LIST_TABLES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">table_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.tables</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">table_schema</span> <span class="pre">=</span> <span class="pre">'public'</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">table_type</span> <span class="pre">=</span> <span class="pre">'BASE</span> <span class="pre">TABLE'\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_LIST_TABLES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_GET_COLUMNS">
+<span class="sig-name descname"><span class="pre">QUERY_GET_COLUMNS</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">column_name,</span> <span class="pre">data_type</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.columns</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">table_name</span> <span class="pre">=</span> <span class="pre">:table_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">table_schema</span> <span class="pre">=</span> <span class="pre">'public'\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ORDER</span> <span class="pre">BY</span> <span class="pre">ordinal_position\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_COLUMNS" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.QUERY_GET_PRIMARY_KEY">
+<span class="sig-name descname"><span class="pre">QUERY_GET_PRIMARY_KEY</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">&quot;\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">SELECT</span> <span class="pre">ccu.column_name\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">FROM</span> <span class="pre">information_schema.table_constraints</span> <span class="pre">tc</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">JOIN</span> <span class="pre">information_schema.constraint_column_usage</span> <span class="pre">ccu</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">ON</span> <span class="pre">tc.constraint_name</span> <span class="pre">=</span> <span class="pre">ccu.constraint_name</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">WHERE</span> <span class="pre">tc.constraint_type</span> <span class="pre">=</span> <span class="pre">'PRIMARY</span> <span class="pre">KEY'</span> <span class="pre">\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">AND</span> <span class="pre">tc.table_name</span> <span class="pre">=</span> <span class="pre">:table_name\n</span>&#160;&#160;&#160;&#160;&#160;&#160;&#160; <span class="pre">LIMIT</span> <span class="pre">1\n</span>&#160;&#160;&#160; <span class="pre">&quot;</span></em><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.QUERY_GET_PRIMARY_KEY" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_list_tables_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_list_tables_query</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_list_tables_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_list_tables_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query para listar todas las tablas del esquema público.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Query SQL para obtener lista de tablas</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_columns_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_columns_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_columns_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_columns_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query y parámetros para obtener columnas de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(query_sql, params_dict)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.db_utils.TableQueryBuilder.get_primary_key_query">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_primary_key_query</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/utils/db_utils.html#TableQueryBuilder.get_primary_key_query"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.db_utils.TableQueryBuilder.get_primary_key_query" title="Link to this definition"></a></dt>
+<dd><p>Retorna query y parámetros para obtener nombre de clave primaria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(query_sql, params_dict)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.utils.minio_utils">Utilidades comunes para operaciones con MinIO.</p>
+<p>Proporciona funciones reutilizables para simplificar las operaciones
+de descarga, carga y procesamiento de archivos CSV desde/hacia MinIO,
+eliminando redundancia en el pipeline.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.utils.minio_utils.</span></span><span class="sig-name descname"><span class="pre">MinIOUtils</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secret_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Utilidades para operaciones comunes con MinIO.</p>
+<p>Encapsula operaciones frecuentes:
+- Crear buckets si no existen
+- Obtener archivos CSV más recientes
+- Descargar archivos como DataFrames
+- Subir DataFrames como CSVs
+- Listar archivos por patrón</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">endpoint</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">access_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">secret_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el cliente MinIO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>endpoint</strong> – Dirección y puerto de MinIO (ej: localhost:9000)</p></li>
+<li><p><strong>access_key</strong> – Clave de acceso (usuario)</p></li>
+<li><p><strong>secret_key</strong> – Clave secreta (contraseña)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.crear_bucket_si_no_existe">
+<span class="sig-name descname"><span class="pre">crear_bucket_si_no_existe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.crear_bucket_si_no_existe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.crear_bucket_si_no_existe" title="Link to this definition"></a></dt>
+<dd><p>Crea un bucket si no existe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>bucket</strong> – Nombre del bucket a crear</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se creó o ya existía</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.obtener_archivo_reciente_csv">
+<span class="sig-name descname"><span class="pre">obtener_archivo_reciente_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.obtener_archivo_reciente_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.obtener_archivo_reciente_csv" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el archivo CSV más reciente (por nombre, orden alfabético).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bucket</strong> – Nombre del bucket</p></li>
+<li><p><strong>prefix</strong> – Prefijo opcional para filtrar (ej: nombre de tabla)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Nombre del archivo más reciente o None si no existe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.descargar_csv">
+<span class="sig-name descname"><span class="pre">descargar_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objeto</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.descargar_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.descargar_csv" title="Link to this definition"></a></dt>
+<dd><p>Descarga un archivo CSV desde MinIO y lo carga como DataFrame.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bucket</strong> – Nombre del bucket</p></li>
+<li><p><strong>objeto</strong> – Nombre del objeto/archivo en MinIO</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame con los datos o None si hay error</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[pd.DataFrame]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.subir_dataframe">
+<span class="sig-name descname"><span class="pre">subir_dataframe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objeto</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.subir_dataframe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.subir_dataframe" title="Link to this definition"></a></dt>
+<dd><p>Sube un DataFrame como archivo CSV a MinIO.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bucket</strong> – Nombre del bucket destino</p></li>
+<li><p><strong>objeto</strong> – Nombre del objeto/archivo en MinIO</p></li>
+<li><p><strong>df</strong> – DataFrame a serializar</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se subió correctamente</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.utils.minio_utils.MinIOUtils.listar_archivos_csv">
+<span class="sig-name descname"><span class="pre">listar_archivos_csv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bucket</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span></span></span><a class="reference internal" href="../_modules/etl/utils/minio_utils.html#MinIOUtils.listar_archivos_csv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.utils.minio_utils.MinIOUtils.listar_archivos_csv" title="Link to this definition"></a></dt>
+<dd><p>Lista todos los archivos CSV en un bucket.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>bucket</strong> – Nombre del bucket</p></li>
+<li><p><strong>prefix</strong> – Prefijo opcional para filtrar por tabla</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de nombres de archivos CSV encontrados</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="uploaders.html" class="btn btn-neutral float-left" title="etl.uploaders - Cargadores a MinIO" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="control.html" class="btn btn-neutral float-right" title="etl.control - Control y Estado" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

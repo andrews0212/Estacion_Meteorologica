@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.table_processor - Procesador de Tablas &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.extractors - Extractores de Datos" href="extractors.html" />
+    <link rel="prev" title="etl.pipeline - Pipeline Principal" href="pipeline.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.table_processor - Procesador de Tablas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.table_processor.TableProcessor"><code class="docutils literal notranslate"><span class="pre">TableProcessor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.table_processor.TableProcessor.__init__"><code class="docutils literal notranslate"><span class="pre">TableProcessor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.table_processor.TableProcessor.process"><code class="docutils literal notranslate"><span class="pre">TableProcessor.process()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.table_processor - Procesador de Tablas</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/table_processor.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.table_processor">
+<span id="etl-table-processor-procesador-de-tablas"></span><h1>etl.table_processor - Procesador de Tablas<a class="headerlink" href="#module-etl.table_processor" title="Link to this heading"></a></h1>
+<p>Procesamiento incremental de tablas individuales en el pipeline ETL.</p>
+<p>Este módulo orquesta la extracción incremental tabla por tabla:</p>
+<ol class="arabic simple">
+<li><p>Detecta la columna de rastreo (timestamp o ID) automáticamente</p></li>
+<li><p>Consulta el estado anterior (.etl_state.json)</p></li>
+<li><p>Extrae solo registros nuevos desde el último procesado</p></li>
+<li><p>Serializa a CSV temporal</p></li>
+<li><p>Sube a MinIO (Bronze)</p></li>
+<li><p>Actualiza estado para próximo ciclo</p></li>
+</ol>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_engine</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.table_processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableInspector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.control.control_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtractionStateManager</span>
+
+<span class="n">engine</span> <span class="o">=</span> <span class="n">create_engine</span><span class="p">(</span><span class="s2">&quot;postgresql://...&quot;</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">conn</span><span class="p">:</span>
+    <span class="n">inspector</span> <span class="o">=</span> <span class="n">TableInspector</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+    <span class="n">state_mgr</span> <span class="o">=</span> <span class="n">ExtractionStateManager</span><span class="p">()</span>
+    <span class="n">state_mgr</span><span class="o">.</span><span class="n">initialize_state</span><span class="p">()</span>
+
+    <span class="n">processor</span> <span class="o">=</span> <span class="n">TableProcessor</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="s2">&quot;sensor_readings&quot;</span><span class="p">,</span> <span class="n">state_mgr</span><span class="p">,</span> <span class="n">inspector</span><span class="p">,</span> <span class="n">minio_cfg</span><span class="p">)</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="n">processor</span><span class="o">.</span><span class="n">process</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Procesados </span><span class="si">{</span><span class="n">records</span><span class="si">}</span><span class="s2"> registros&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.table_processor.</span></span><span class="sig-name descname"><span class="pre">TableProcessor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="control.html#etl.control.control_manager.ExtractionStateManager" title="etl.control.control_manager.ExtractionStateManager"><span class="pre">ExtractionStateManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="extractors.html#etl.extractors.table_inspector.TableInspector" title="etl.extractors.table_inspector.TableInspector"><span class="pre">TableInspector</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Procesa una tabla individual con extracción incremental.</p>
+<p>Responsabilidades:
+- Detectar automáticamente columna de rastreo (timestamp o ID)
+- Recuperar último valor procesado del archivo de estado
+- Extraer nuevos registros usando <code class="xref py py-class docutils literal notranslate"><span class="pre">etl.extractors.DataExtractor</span></code>
+- Serializar a archivo CSV temporal
+- Subir a MinIO bucket Bronze
+- Actualizar estado (.etl_state.json) con máximo valor procesado</p>
+<p>El procesamiento es incremental: nunca reprocesa los mismos datos dos veces.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state_manager</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="control.html#etl.control.control_manager.ExtractionStateManager" title="etl.control.control_manager.ExtractionStateManager"><span class="pre">ExtractionStateManager</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inspector</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="extractors.html#etl.extractors.table_inspector.TableInspector" title="etl.extractors.table_inspector.TableInspector"><span class="pre">TableInspector</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">minio_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="config.html#config.minio_config.MinIOConfig" title="config.minio_config.MinIOConfig"><span class="pre">MinIOConfig</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el procesador para una tabla específica.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa a PostgreSQL</p></li>
+<li><p><strong>table_name</strong> – Nombre de la tabla a procesar (ej: ‘sensor_readings’)</p></li>
+<li><p><strong>state_manager</strong> – Gestor de estado para rastrear progreso (.etl_state.json)</p></li>
+<li><p><strong>inspector</strong> – Inspector de tablas para detectar estructura</p></li>
+<li><p><strong>minio_config</strong> – Configuración de MinIO para cargar datos</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.table_processor.TableProcessor.process">
+<span class="sig-name descname"><span class="pre">process</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/table_processor.html#TableProcessor.process"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.table_processor.TableProcessor.process" title="Link to this definition"></a></dt>
+<dd><p>Procesa tabla completa con extracción incremental.</p>
+<p>Workflow:
+1. <strong>Detectar columna incremental</strong>: Busca timestamp o ID automáticamente (ej: created_at, id)
+2. <strong>Consultar estado anterior</strong>: Obtiene último valor procesado desde .etl_state.json
+3. <strong>Extraer registros nuevos</strong>: Ejecuta query para &gt; último_valor
+4. <strong>Si hay datos</strong>: Serializa a CSV, sube a MinIO y actualiza estado</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Cantidad de registros nuevos procesados en esta tabla</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>int</p>
+</dd>
+</dl>
+<dl class="simple">
+<dt>Nota:</dt><dd><p>Si no detecta columna de rastreo, retorna 0 y registra advertencia.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="pipeline.html" class="btn btn-neutral float-left" title="etl.pipeline - Pipeline Principal" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="extractors.html" class="btn btn-neutral float-right" title="etl.extractors - Extractores de Datos" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

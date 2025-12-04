@@ -1,6 +1,7 @@
 """Clase base para escritores de archivos.
 
-Proporciona la interfaz abstracta para serializar DataFrames a disco.
+Define interfaz abstracta para serialización de DataFrames a diferentes
+formatos (CSV, Parquet, etc) en archivos temporales.
 """
 
 import os
@@ -12,19 +13,26 @@ from abc import ABC, abstractmethod
 
 
 class FileWriter(ABC):
-    """Clase base para escritores de archivos.
-
-    Proporciona la lógica común de nombre de fichero temporal y eliminación
-    del archivo cuando ya no es necesario.
+    """Clase base abstracta para escritores de archivos.
+    
+    Responsabilidades:
+    - Generar nombres únicos de archivos con timestamp
+    - Almacenar en carpeta temporal del sistema
+    - Proporcionar interfaz de limpieza
+    
+    Las subclases deben implementar el método write() para format específico.
     """
     
     def __init__(self, table_name: str, extension: str):
         """
-        Inicializa escritor.
+        Inicializa el escritor de archivos.
         
         Args:
-            table_name (str): Nombre de la tabla.
-            extension (str): Extensión del archivo (csv, parquet, etc.).
+            table_name: Nombre de la tabla (base para nombre del archivo)
+            extension: Extensión del archivo (csv, parquet, json, etc.)
+            
+        Note:
+            El archivo se guarda en la carpeta temporal del sistema con timestamp.
         """
         self.table_name = table_name
         self.timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -33,26 +41,20 @@ class FileWriter(ABC):
     
     @abstractmethod
     def write(self, dataframe: pd.DataFrame) -> str:
-        """Escribe DataFrame a archivo.
+        """
+        Escribe DataFrame a archivo en formato específico.
 
-        Debe ser implementado por subclases y retornar la ruta local del
-        archivo generado.
+        Debe ser implementado por subclases. Ejemplo: CSVWriter, ParquetWriter.
 
         Args:
-            dataframe (pandas.DataFrame): DataFrame a serializar.
+            dataframe: DataFrame a serializar a disco
 
         Returns:
-            str: Ruta absoluta al archivo generado.
-
-        Ejemplo::
-
-            writer = CSVWriter('sensor_readings')
-            path = writer.write(df)
-            # path -> 'C:\\Windows\\Temp\\sensor_readings_bronce_20250101120000.csv'
+            str: Ruta absoluta al archivo generado
         """
         pass
     
     def cleanup(self) -> None:
-        """Elimina archivo temporal."""
+        """Elimina el archivo temporal después de usar."""
         if os.path.exists(self.local_path):
             os.remove(self.local_path)

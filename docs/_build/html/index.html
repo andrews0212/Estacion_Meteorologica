@@ -1,0 +1,192 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estación Meteorológica &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Guía de Uso" href="guia_uso.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="#" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guia_uso.html">Guía de Uso</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="#">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="#" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Estación Meteorológica</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="estacion-meteorologica">
+<h1>Estación Meteorológica<a class="headerlink" href="#estacion-meteorologica" title="Link to this heading"></a></h1>
+<p>Sistema ETL para monitoreo y análisis de datos de estaciones meteorológicas.</p>
+<p><strong>Descripción del Proyecto:</strong></p>
+<p>La Estación Meteorológica es un pipeline de datos (ETL) que implementa la arquitectura medallion (Bronze, Silver, Gold) para:</p>
+<ul class="simple">
+<li><p><strong>Extracción</strong>: Obtener datos de temperatura, humedad, velocidad de viento y más desde una base de datos PostgreSQL</p></li>
+<li><p><strong>Transformación</strong>: Limpiar, enriquecer y transformar los datos usando PySpark</p></li>
+<li><p><strong>Carga</strong>: Almacenar datos procesados en MinIO (almacenamiento S3-compatible) y generar KPIs</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="guia_uso.html">Guía de Uso</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#instalacion">Instalación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#configuracion">Configuración</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#uso">Uso</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#flujo-de-datos">Flujo de Datos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#estado-y-tracking">Estado y Tracking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="guia_uso.html#utilidades-y-herramientas">Utilidades y Herramientas</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Referencia de Módulos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#module-main">Módulo Principal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html#module-etl.pipeline">Pipeline y Procesamiento</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/pipeline.html">etl.pipeline - Pipeline Principal</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/pipeline.html#etl.pipeline.ETLPipeline"><code class="docutils literal notranslate"><span class="pre">ETLPipeline</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/table_processor.html">etl.table_processor - Procesador de Tablas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/table_processor.html#etl.table_processor.TableProcessor"><code class="docutils literal notranslate"><span class="pre">TableProcessor</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/extractors.html">etl.extractors - Extractores de Datos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/extractors.html#etl.extractors.data_extractor.DataExtractor"><code class="docutils literal notranslate"><span class="pre">DataExtractor</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/extractors.html#etl.extractors.table_inspector.TrackingColumnDetector"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/extractors.html#etl.extractors.table_inspector.TableInspector"><code class="docutils literal notranslate"><span class="pre">TableInspector</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/managers.html">etl.managers - Gestores de Capas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/managers.html#etl.managers.layer_manager.LayerManager"><code class="docutils literal notranslate"><span class="pre">LayerManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/managers.html#etl.managers.silver_manager.SilverManager"><code class="docutils literal notranslate"><span class="pre">SilverManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/managers.html#etl.managers.gold_manager.GoldManager"><code class="docutils literal notranslate"><span class="pre">GoldManager</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/writers.html">etl.writers - Escritores de Archivos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/writers.html#etl.writers.file_writer.FileWriter"><code class="docutils literal notranslate"><span class="pre">FileWriter</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/writers.html#etl.writers.csv_writer.CSVWriter"><code class="docutils literal notranslate"><span class="pre">CSVWriter</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/uploaders.html#etl.uploaders.minio_uploader.MinIOUploader"><code class="docutils literal notranslate"><span class="pre">MinIOUploader</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/utils.html">etl.utils - Utilidades</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/utils.html#etl.utils.db_utils.DatabaseUtils"><code class="docutils literal notranslate"><span class="pre">DatabaseUtils</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/utils.html#etl.utils.db_utils.TableQueryBuilder"><code class="docutils literal notranslate"><span class="pre">TableQueryBuilder</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/utils.html#etl.utils.minio_utils.MinIOUtils"><code class="docutils literal notranslate"><span class="pre">MinIOUtils</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/control.html">etl.control - Control y Estado</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/control.html#etl.control.control_manager.ExtractionStateManager"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/control.html#etl.etl_state.StateManager"><code class="docutils literal notranslate"><span class="pre">StateManager</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/control.html#etl.etl_state.reset_etl_state"><code class="docutils literal notranslate"><span class="pre">reset_etl_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="etl/config.html">config - Configuración</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="etl/config.html#config.database_config.Config"><code class="docutils literal notranslate"><span class="pre">Config</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/config.html#config.database_config.DatabaseConfig"><code class="docutils literal notranslate"><span class="pre">DatabaseConfig</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="etl/config.html#config.minio_config.MinIOConfig"><code class="docutils literal notranslate"><span class="pre">MinIOConfig</span></code></a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="guia_uso.html" class="btn btn-neutral float-right" title="Guía de Uso" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

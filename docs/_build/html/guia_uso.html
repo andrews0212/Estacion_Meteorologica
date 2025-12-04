@@ -1,0 +1,237 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guía de Uso &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="main - Punto de Entrada" href="etl/main.html" />
+    <link rel="prev" title="Referencia de Módulos" href="modules.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Guía de Uso</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#instalacion">Instalación</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#configuracion">Configuración</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#uso">Uso</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#arquitectura">Arquitectura</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#flujo-de-datos">Flujo de Datos</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#estado-y-tracking">Estado y Tracking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#utilidades-y-herramientas">Utilidades y Herramientas</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="etl/main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Guía de Uso</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/guia_uso.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="guia-de-uso">
+<h1>Guía de Uso<a class="headerlink" href="#guia-de-uso" title="Link to this heading"></a></h1>
+<section id="instalacion">
+<h2>Instalación<a class="headerlink" href="#instalacion" title="Link to this heading"></a></h2>
+<dl class="simple">
+<dt>Prerrequisitos:</dt><dd><ul class="simple">
+<li><p>Python 3.10+</p></li>
+<li><p>PostgreSQL</p></li>
+<li><p>MinIO (o compatible con S3)</p></li>
+<li><p>PySpark</p></li>
+</ul>
+</dd>
+</dl>
+<p>Instalación del entorno virtual:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv_meteo
+.<span class="se">\v</span>env_meteo<span class="se">\S</span>cripts<span class="se">\a</span>ctivate
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="configuracion">
+<h2>Configuración<a class="headerlink" href="#configuracion" title="Link to this heading"></a></h2>
+<p>Crear archivo <cite>.env</cite> con variables de entorno:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># PostgreSQL</span>
+<span class="nv">DB_HOST</span><span class="o">=</span>localhost
+<span class="nv">DB_PORT</span><span class="o">=</span><span class="m">5432</span>
+<span class="nv">DB_USER</span><span class="o">=</span>user
+<span class="nv">DB_PASSWORD</span><span class="o">=</span>password
+<span class="nv">DB_NAME</span><span class="o">=</span>meteorology
+
+<span class="c1"># MinIO</span>
+<span class="nv">MINIO_HOST</span><span class="o">=</span>localhost:9000
+<span class="nv">MINIO_ACCESS_KEY</span><span class="o">=</span>minioadmin
+<span class="nv">MINIO_SECRET_KEY</span><span class="o">=</span>minioadmin
+<span class="nv">MINIO_SECURE</span><span class="o">=</span><span class="nb">false</span>
+</pre></div>
+</div>
+</section>
+<section id="uso">
+<h2>Uso<a class="headerlink" href="#uso" title="Link to this heading"></a></h2>
+<p><strong>Ejecutar pipeline único:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p><strong>Ejecutar scheduler continuo:</strong></p>
+<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="p">.\</span><span class="n">run_scheduler</span><span class="p">.</span><span class="n">ps1</span>
+</pre></div>
+</div>
+<p><strong>Simular datos:</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">main</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">simulate</span>
+</pre></div>
+</div>
+</section>
+<section id="arquitectura">
+<h2>Arquitectura<a class="headerlink" href="#arquitectura" title="Link to this heading"></a></h2>
+<p>El sistema implementa la arquitectura medallion de 3 capas:</p>
+<ol class="arabic simple">
+<li><p><strong>Bronze</strong>: Datos crudos extraídos de PostgreSQL
+- Almacenados en MinIO bucket: <cite>bronze-layer</cite>
+- Formato CSV con metadata</p></li>
+<li><p><strong>Silver</strong>: Datos limpios y transformados
+- Almacenados en MinIO bucket: <cite>silver-layer</cite>
+- Aplicadas transformaciones PySpark
+- Ejecutado mediante notebooks en <cite>notebooks/templates/limpieza_template.ipynb</cite></p></li>
+<li><p><strong>Gold</strong>: Datos agregados y KPIs
+- Almacenados en MinIO bucket: <cite>gold-layer</cite>
+- Métricas y KPIs calculados
+- Ejecutado mediante notebooks en <cite>notebooks/templates/generacion_KPI.ipynb</cite></p></li>
+</ol>
+</section>
+<section id="flujo-de-datos">
+<h2>Flujo de Datos<a class="headerlink" href="#flujo-de-datos" title="Link to this heading"></a></h2>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>PostgreSQL → ETL Pipeline → Bronze Layer (MinIO)
+                                ↓
+                        Silver Layer (MinIO)
+                        [PySpark Transformations]
+                                ↓
+                        Gold Layer (MinIO)
+                        [KPI Calculation]
+                                ↓
+                        Reporting &amp; Analytics
+</pre></div>
+</div>
+</section>
+<section id="estado-y-tracking">
+<h2>Estado y Tracking<a class="headerlink" href="#estado-y-tracking" title="Link to this heading"></a></h2>
+<p>El sistema mantiene un registro de estado en <cite>.etl_state.json</cite>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;last_execution_time&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:00&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;tables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;tabla_1&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">&quot;last_extracted_id&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1000</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">&quot;last_extracted_timestamp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2025-01-01T12:00:00&quot;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="utilidades-y-herramientas">
+<h2>Utilidades y Herramientas<a class="headerlink" href="#utilidades-y-herramientas" title="Link to this heading"></a></h2>
+<p><strong>DatabaseUtils</strong>: Conexión y operaciones a PostgreSQL
+<strong>MinIOUtils</strong>: Operaciones con almacenamiento MinIO
+<strong>TableInspector</strong>: Inspección automática de tablas y detección de columnas de tracking
+<strong>ExtractionStateManager</strong>: Gestión del estado de extracción
+<strong>NotebookExecutor</strong>: Ejecución de notebooks PySpark con Papermill</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="modules.html" class="btn btn-neutral float-left" title="Referencia de Módulos" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="etl/main.html" class="btn btn-neutral float-right" title="main - Punto de Entrada" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

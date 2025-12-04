@@ -1,0 +1,227 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.writers - Escritores de Archivos &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.uploaders - Cargadores a MinIO" href="uploaders.html" />
+    <link rel="prev" title="etl.managers - Gestores de Capas" href="managers.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.writers - Escritores de Archivos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.writers.file_writer.FileWriter"><code class="docutils literal notranslate"><span class="pre">FileWriter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.writers.file_writer.FileWriter.__init__"><code class="docutils literal notranslate"><span class="pre">FileWriter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.writers.file_writer.FileWriter.write"><code class="docutils literal notranslate"><span class="pre">FileWriter.write()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.writers.file_writer.FileWriter.cleanup"><code class="docutils literal notranslate"><span class="pre">FileWriter.cleanup()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.writers.csv_writer.CSVWriter"><code class="docutils literal notranslate"><span class="pre">CSVWriter</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.writers.csv_writer.CSVWriter.__init__"><code class="docutils literal notranslate"><span class="pre">CSVWriter.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.writers.csv_writer.CSVWriter.write"><code class="docutils literal notranslate"><span class="pre">CSVWriter.write()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.writers - Escritores de Archivos</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/writers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.writers.file_writer">
+<span id="etl-writers-escritores-de-archivos"></span><h1>etl.writers - Escritores de Archivos<a class="headerlink" href="#module-etl.writers.file_writer" title="Link to this heading"></a></h1>
+<p>Clase base para escritores de archivos.</p>
+<p>Define interfaz abstracta para serialización de DataFrames a diferentes
+formatos (CSV, Parquet, etc) en archivos temporales.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.writers.file_writer.</span></span><span class="sig-name descname"><span class="pre">FileWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ABC</span></code></p>
+<p>Clase base abstracta para escritores de archivos.</p>
+<p>Responsabilidades:
+- Generar nombres únicos de archivos con timestamp
+- Almacenar en carpeta temporal del sistema
+- Proporcionar interfaz de limpieza</p>
+<p>Las subclases deben implementar el método write() para format específico.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extension</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el escritor de archivos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> – Nombre de la tabla (base para nombre del archivo)</p></li>
+<li><p><strong>extension</strong> – Extensión del archivo (csv, parquet, json, etc.)</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>El archivo se guarda en la carpeta temporal del sistema con timestamp.</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.write">
+<em class="property"><span class="k"><span class="pre">abstractmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.write" title="Link to this definition"></a></dt>
+<dd><p>Escribe DataFrame a archivo en formato específico.</p>
+<p>Debe ser implementado por subclases. Ejemplo: CSVWriter, ParquetWriter.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataframe</strong> – DataFrame a serializar a disco</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ruta absoluta al archivo generado</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.file_writer.FileWriter.cleanup">
+<span class="sig-name descname"><span class="pre">cleanup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/writers/file_writer.html#FileWriter.cleanup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.file_writer.FileWriter.cleanup" title="Link to this definition"></a></dt>
+<dd><p>Elimina el archivo temporal después de usar.</p>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.writers.csv_writer">Escritor de archivos CSV para DataFrames.</p>
+<p>Serializa pandas DataFrames a archivos CSV en carpeta temporal del sistema.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.writers.csv_writer.</span></span><span class="sig-name descname"><span class="pre">CSVWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#etl.writers.file_writer.FileWriter" title="etl.writers.file_writer.FileWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">FileWriter</span></code></a></p>
+<p>Escritor de DataFrames a archivos CSV.</p>
+<p>Hereda de FileWriter y proporciona serialización a formato CSV.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el escritor CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla (usado en nombre del archivo)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.writers.csv_writer.CSVWriter.write">
+<span class="sig-name descname"><span class="pre">write</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataframe</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">DataFrame</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/etl/writers/csv_writer.html#CSVWriter.write"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.writers.csv_writer.CSVWriter.write" title="Link to this definition"></a></dt>
+<dd><p>Guarda un DataFrame como archivo CSV.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dataframe</strong> – DataFrame a serializar</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Ruta absoluta al archivo CSV generado</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="managers.html" class="btn btn-neutral float-left" title="etl.managers - Gestores de Capas" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="uploaders.html" class="btn btn-neutral float-right" title="etl.uploaders - Cargadores a MinIO" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

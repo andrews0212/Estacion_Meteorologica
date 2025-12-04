@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.control - Control y Estado &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="config - Configuración" href="config.html" />
+    <link rel="prev" title="etl.utils - Utilidades" href="utils.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.control - Control y Estado</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.__init__"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.initialize_state"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.initialize_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.get_last_extracted_value"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.get_last_extracted_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.update_extraction_state"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.update_extraction_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.display_current_state"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.display_current_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.control.control_manager.ExtractionStateManager.reset_extraction_state"><code class="docutils literal notranslate"><span class="pre">ExtractionStateManager.reset_extraction_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.etl_state.StateManager"><code class="docutils literal notranslate"><span class="pre">StateManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.__init__"><code class="docutils literal notranslate"><span class="pre">StateManager.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.get_last_extraction"><code class="docutils literal notranslate"><span class="pre">StateManager.get_last_extraction()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.get_last_extracted_value"><code class="docutils literal notranslate"><span class="pre">StateManager.get_last_extracted_value()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.get_tracking_column"><code class="docutils literal notranslate"><span class="pre">StateManager.get_tracking_column()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.update_extraction_state"><code class="docutils literal notranslate"><span class="pre">StateManager.update_extraction_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.get_all_states"><code class="docutils literal notranslate"><span class="pre">StateManager.get_all_states()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.reset_state"><code class="docutils literal notranslate"><span class="pre">StateManager.reset_state()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.etl_state.StateManager.display_state"><code class="docutils literal notranslate"><span class="pre">StateManager.display_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.etl_state.reset_etl_state"><code class="docutils literal notranslate"><span class="pre">reset_etl_state()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.control - Control y Estado</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/control.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.control.control_manager">
+<span id="etl-control-control-y-estado"></span><h1>etl.control - Control y Estado<a class="headerlink" href="#module-etl.control.control_manager" title="Link to this heading"></a></h1>
+<p>Gestión de estado de extracciones incrementales usando archivo JSON.</p>
+<p>Reemplaza la tabla SQL etl_control tradicional con un archivo JSON local,
+simplificando la persistencia de estado sin depender de la base de datos.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.control.control_manager.</span></span><span class="sig-name descname"><span class="pre">ExtractionStateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestor de estado para extracciones ETL usando archivo JSON local.</p>
+<p>Almacena y recupera:
+- Último valor extraído de cada tabla
+- Columna de rastreo utilizada
+- Timestamp de última extracción
+- Cantidad de registros procesados</p>
+<p>Reemplaza la tabla <code class="docutils literal notranslate"><span class="pre">etl_control</span></code> de la base de datos.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de estado de extracciones.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state_file</strong> – Ruta del archivo JSON de estado (default: .etl_state.json en raíz del proyecto)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.initialize_state">
+<span class="sig-name descname"><span class="pre">initialize_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.initialize_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.initialize_state" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el archivo de estado (se crea automáticamente si no existe).</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.get_last_extracted_value">
+<span class="sig-name descname"><span class="pre">get_last_extracted_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.get_last_extracted_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.get_last_extracted_value" title="Link to this definition"></a></dt>
+<dd><p>Obtiene último valor extraído de una tabla y su columna de rastreo.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(último_valor, columna_rastreo) o (None, None) si no existe registro</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.update_extraction_state">
+<span class="sig-name descname"><span class="pre">update_extraction_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows_extracted</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.update_extraction_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.update_extraction_state" title="Link to this definition"></a></dt>
+<dd><p>Actualiza el estado de extracción de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> – Nombre de la tabla</p></li>
+<li><p><strong>value</strong> – Nuevo valor máximo extraído (numérico o timestamp)</p></li>
+<li><p><strong>tracking_column</strong> – Nombre de columna de rastreo</p></li>
+<li><p><strong>rows_extracted</strong> – Cantidad de filas extraídas en este ciclo</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.display_current_state">
+<span class="sig-name descname"><span class="pre">display_current_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.display_current_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.display_current_state" title="Link to this definition"></a></dt>
+<dd><p>Muestra el estado actual de todas las extracciones.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.control.control_manager.ExtractionStateManager.reset_extraction_state">
+<span class="sig-name descname"><span class="pre">reset_extraction_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/control/control_manager.html#ExtractionStateManager.reset_extraction_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.control.control_manager.ExtractionStateManager.reset_extraction_state" title="Link to this definition"></a></dt>
+<dd><p>Limpia el estado de extracción de una tabla (o todas).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Tabla a limpiar. Si None, limpia todas.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.etl_state">Gestor de estado ETL: Almacena y recupera estado de extracciones en archivo JSON.</p>
+<p>Reemplaza la tabla <code class="docutils literal notranslate"><span class="pre">etl_control</span></code> tradicional con un archivo JSON local,
+simplificando la persistencia sin depender de la base de datos.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.etl_state.</span></span><span class="sig-name descname"><span class="pre">StateManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestor de estado ETL usando archivo JSON local.</p>
+<p>Responsabilidades:
+- Cargar/guardar estado de extracciones en archivo <cite>.etl_state.json</cite>
+- Recuperar último valor extraído por tabla
+- Actualizar estado tras cada ciclo de extracción
+- Limpiar/resetear estado completo si es necesario</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de estado.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state_file</strong> – Ruta del archivo JSON de estado (default: .etl_state.json)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.get_last_extraction">
+<span class="sig-name descname"><span class="pre">get_last_extraction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.get_last_extraction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.get_last_extraction" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el último estado de extracción de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>…, ‘tracking_column’: …, ‘timestamp’: …}
+o None si no hay registro</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict con los datos {‘last_value’</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.get_last_extracted_value">
+<span class="sig-name descname"><span class="pre">get_last_extracted_value</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.get_last_extracted_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.get_last_extracted_value" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el último valor extraído de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>El último valor extraído o None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.get_tracking_column">
+<span class="sig-name descname"><span class="pre">get_tracking_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.get_tracking_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.get_tracking_column" title="Link to this definition"></a></dt>
+<dd><p>Obtiene la columna de rastreo de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Nombre de la columna de rastreo o None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.update_extraction_state">
+<span class="sig-name descname"><span class="pre">update_extraction_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">last_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rows_extracted</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.update_extraction_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.update_extraction_state" title="Link to this definition"></a></dt>
+<dd><p>Actualiza el estado de extracción de una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>table_name</strong> – Nombre de la tabla</p></li>
+<li><p><strong>last_value</strong> – Último valor extraído</p></li>
+<li><p><strong>tracking_column</strong> – Columna de rastreo</p></li>
+<li><p><strong>rows_extracted</strong> – Cantidad de filas extraídas</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se actualizó correctamente</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.get_all_states">
+<span class="sig-name descname"><span class="pre">get_all_states</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.get_all_states"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.get_all_states" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el estado completo de todas las tablas.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Diccionario con estado de todas las tablas</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.reset_state">
+<span class="sig-name descname"><span class="pre">reset_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.reset_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.reset_state" title="Link to this definition"></a></dt>
+<dd><p>Limpia el estado de una tabla (o todas).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Tabla a limpiar. Si None, limpia todas.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se limpió correctamente</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.etl_state.StateManager.display_state">
+<span class="sig-name descname"><span class="pre">display_state</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#StateManager.display_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.StateManager.display_state" title="Link to this definition"></a></dt>
+<dd><p>Muestra el estado actual de forma legible.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="etl.etl_state.reset_etl_state">
+<span class="sig-prename descclassname"><span class="pre">etl.etl_state.</span></span><span class="sig-name descname"><span class="pre">reset_etl_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.etl_state.json'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/etl_state.html#reset_etl_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.etl_state.reset_etl_state" title="Link to this definition"></a></dt>
+<dd><p>Función helper para limpiar completamente el estado.
+Útil para simular primera extracción.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state_file</strong> – Ruta del archivo de estado</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se limpió correctamente</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="utils.html" class="btn btn-neutral float-left" title="etl.utils - Utilidades" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="config.html" class="btn btn-neutral float-right" title="config - Configuración" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

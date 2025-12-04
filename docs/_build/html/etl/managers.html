@@ -1,0 +1,382 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.managers - Gestores de Capas &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.writers - Escritores de Archivos" href="writers.html" />
+    <link rel="prev" title="etl.extractors - Extractores de Datos" href="extractors.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.managers - Gestores de Capas</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager"><code class="docutils literal notranslate"><span class="pre">LayerManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.__init__"><code class="docutils literal notranslate"><span class="pre">LayerManager.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.obtener_versiones_tabla"><code class="docutils literal notranslate"><span class="pre">LayerManager.obtener_versiones_tabla()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.obtener_archivo_reciente"><code class="docutils literal notranslate"><span class="pre">LayerManager.obtener_archivo_reciente()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.eliminar_archivo"><code class="docutils literal notranslate"><span class="pre">LayerManager.eliminar_archivo()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.limpiar_versiones_antiguas"><code class="docutils literal notranslate"><span class="pre">LayerManager.limpiar_versiones_antiguas()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.layer_manager.LayerManager.obtener_estadisticas_tabla"><code class="docutils literal notranslate"><span class="pre">LayerManager.obtener_estadisticas_tabla()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.managers.silver_manager.SilverManager"><code class="docutils literal notranslate"><span class="pre">SilverManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.silver_manager.SilverManager.__init__"><code class="docutils literal notranslate"><span class="pre">SilverManager.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.managers.gold_manager.GoldManager"><code class="docutils literal notranslate"><span class="pre">GoldManager</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.managers.gold_manager.GoldManager.__init__"><code class="docutils literal notranslate"><span class="pre">GoldManager.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.managers - Gestores de Capas</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/managers.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.managers.layer_manager">
+<span id="etl-managers-gestores-de-capas"></span><h1>etl.managers - Gestores de Capas<a class="headerlink" href="#module-etl.managers.layer_manager" title="Link to this heading"></a></h1>
+<p>Base abstracta para gestores de capas (Silver, Gold) en MinIO.</p>
+<p>Proporciona funcionalidad común para administrar archivos en buckets de capas,
+eliminando redundancia entre SilverManager y GoldManager.</p>
+<p>Funcionalidades:
+- Listar versiones históricas de archivos por tabla
+- Obtener versión más reciente
+- Eliminar versiones antiguas (estrategia REPLACE)
+- Calcular estadísticas de almacenamiento</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.managers.layer_manager.</span></span><span class="sig-name descname"><span class="pre">LayerManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bucket_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Gestor base para capas de datos (Silver, Gold, etc) en MinIO.</p>
+<p>Implementa operaciones comunes para gestionar versiones de archivos en buckets:
+- Listar archivos por tabla con rastreo de versiones
+- Limpiar versiones antiguas (mantener solo la más reciente)
+- Calcular estadísticas de uso de almacenamiento</p>
+<p>Estrategia de versiones: <strong>REPLACE</strong>
+- Sobrescribe versiones antiguas con nuevas automáticamente
+- Mantiene solo los datos más recientes de cada tabla
+- Optimiza espacio de almacenamiento</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>minio_config</strong> – Configuración de MinIO</p></li>
+<li><p><strong>bucket_suffix</strong> – Sufijo del bucket (ej: ‘-silver’ para ‘meteo-silver’, ‘-gold’ para ‘meteo-gold’)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bucket_suffix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de capa.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>minio_config</strong> – Configuración de MinIO (tipo MinIOConfig)</p></li>
+<li><p><strong>bucket_suffix</strong> – Sufijo del bucket para esta capa (ej: ‘-silver’, ‘-gold’)</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>El bucket se construye reemplazando ‘-bronze’ por el sufijo en el bucket
+configurado (ej: ‘meteo-bronze’ → ‘meteo-silver’)</p>
+</div>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.obtener_versiones_tabla">
+<span class="sig-name descname"><span class="pre">obtener_versiones_tabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.obtener_versiones_tabla"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.obtener_versiones_tabla" title="Link to this definition"></a></dt>
+<dd><p>Obtiene historial de versiones de una tabla (todos los archivos CSV).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> – Nombre de la tabla (ej: ‘sensor_readings’)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de nombres de archivos ordenados cronológicamente (antiguos → recientes)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.obtener_archivo_reciente">
+<span class="sig-name descname"><span class="pre">obtener_archivo_reciente</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.obtener_archivo_reciente"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.obtener_archivo_reciente" title="Link to this definition"></a></dt>
+<dd><p>Obtiene el archivo más reciente de una tabla (última versión).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Nombre del archivo más reciente o None si no existe</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Optional[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.eliminar_archivo">
+<span class="sig-name descname"><span class="pre">eliminar_archivo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">archivo</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.eliminar_archivo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.eliminar_archivo" title="Link to this definition"></a></dt>
+<dd><p>Elimina un archivo específico de la capa.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>archivo</strong> (<em>str</em>) – Nombre del archivo a eliminar.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>True si se eliminó correctamente.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.limpiar_versiones_antiguas">
+<span class="sig-name descname"><span class="pre">limpiar_versiones_antiguas</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mantener_actual</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.limpiar_versiones_antiguas"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.limpiar_versiones_antiguas" title="Link to this definition"></a></dt>
+<dd><p>Limpia versiones antiguas según estrategia REPLACE.</p>
+<p>Workflow:
+- Si <cite>mantener_actual=True</cite>: Elimina todas menos la más reciente (recomendado)
+- Si <cite>mantener_actual=False</cite>: Elimina todas las versiones</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>tabla</strong> – Nombre de la tabla (ej: ‘sensor_readings’)</p></li>
+<li><p><strong>mantener_actual</strong> – Si True, mantiene la versión más reciente</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Cantidad de archivos eliminados</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.layer_manager.LayerManager.obtener_estadisticas_tabla">
+<span class="sig-name descname"><span class="pre">obtener_estadisticas_tabla</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">tabla</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/managers/layer_manager.html#LayerManager.obtener_estadisticas_tabla"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.layer_manager.LayerManager.obtener_estadisticas_tabla" title="Link to this definition"></a></dt>
+<dd><p>Calcula estadísticas de almacenamiento para una tabla.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>tabla</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>tabla: Nombre de la tabla</p></li>
+<li><p>total_versiones: Cantidad de versiones almacenadas</p></li>
+<li><p>version_antigua: Nombre del archivo más antiguo</p></li>
+<li><p>version_reciente: Nombre del archivo más reciente</p></li>
+<li><p>espacio_total_mb: Tamaño total en megabytes</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict con claves</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.managers.silver_manager">Gestor de capa Silver: datos limpios después de transformación.</p>
+<p>Este módulo implements SilverManager, especialización de LayerManager para trabajar
+con el bucket Silver que contiene datos después de limpieza y transformación con PySpark.</p>
+<p>Estrategia: <strong>REPLACE</strong>
+- Mantiene solo la versión más reciente de cada tabla
+- Elimina automáticamente versiones antiguas para optimizar espacio</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.managers.silver_manager.</span></span><span class="sig-name descname"><span class="pre">SilverManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#etl.managers.layer_manager.LayerManager" title="etl.managers.layer_manager.LayerManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerManager</span></code></a></p>
+<p>Gestor especial para la capa Silver: datos limpios y transformados.</p>
+<p>Hereda todas las funcionalidades de LayerManager, especializado para trabajar
+con el bucket ‘meteo-silver’ que contiene datos después del procesamiento
+PySpark de limpieza y normalización.</p>
+<p>La estrategia de versiones es REPLACE: solo mantiene la versión más reciente
+de cada tabla para optimizar espacio de almacenamiento.</p>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinIOConfig</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">MinIOConfig</span><span class="p">()</span>
+<span class="n">sm</span> <span class="o">=</span> <span class="n">SilverManager</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Listar versiones de una tabla</span>
+<span class="n">versiones</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">obtener_versiones_tabla</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+
+<span class="c1"># Obtener la más reciente</span>
+<span class="n">archivo</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">obtener_archivo_reciente</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+
+<span class="c1"># Limpiar versiones antiguas</span>
+<span class="n">eliminados</span> <span class="o">=</span> <span class="n">sm</span><span class="o">.</span><span class="n">limpiar_versiones_antiguas</span><span class="p">(</span><span class="s1">&#39;sensor_readings&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.silver_manager.SilverManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/silver_manager.html#SilverManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.silver_manager.SilverManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de la capa Silver.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> – Configuración de MinIO</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Configura automáticamente el bucket ‘-silver’ según la configuración</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.managers.gold_manager">Gestor de capa Gold: KPIs y métricas agregadas.</p>
+<p>Este módulo implementa GoldManager, especialización de LayerManager para trabajar
+con el bucket Gold que contiene KPIs y métricas agregadas calculadas con PySpark.</p>
+<p>Estrategia: <strong>REPLACE</strong>
+- Mantiene solo la versión más reciente de cada tabla
+- Elimina automáticamente versiones antiguas para optimizar espacio</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.managers.gold_manager.GoldManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.managers.gold_manager.</span></span><span class="sig-name descname"><span class="pre">GoldManager</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/gold_manager.html#GoldManager"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.gold_manager.GoldManager" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#etl.managers.layer_manager.LayerManager" title="etl.managers.layer_manager.LayerManager"><code class="xref py py-class docutils literal notranslate"><span class="pre">LayerManager</span></code></a></p>
+<p>Gestor especial para la capa Gold: KPIs y métricas agregadas.</p>
+<p>Hereda todas las funcionalidades de LayerManager, especializado para trabajar
+con el bucket ‘meteo-gold’ que contiene KPIs, métricas agregadas y análisis
+calculados con PySpark sobre los datos de Silver.</p>
+<p>La estrategia de versiones es REPLACE: solo mantiene la versión más reciente
+de cada tabla para optimizar espacio de almacenamiento.</p>
+<p>Ejemplo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinIOConfig</span>
+<span class="n">cfg</span> <span class="o">=</span> <span class="n">MinIOConfig</span><span class="p">()</span>
+<span class="n">gm</span> <span class="o">=</span> <span class="n">GoldManager</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>
+
+<span class="c1"># Listar versiones de una tabla</span>
+<span class="n">versiones</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">obtener_versiones_tabla</span><span class="p">(</span><span class="s1">&#39;metricas_kpi&#39;</span><span class="p">)</span>
+
+<span class="c1"># Obtener la más reciente</span>
+<span class="n">archivo</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">obtener_archivo_reciente</span><span class="p">(</span><span class="s1">&#39;metricas_kpi&#39;</span><span class="p">)</span>
+
+<span class="c1"># Limpiar versiones antiguas</span>
+<span class="n">eliminados</span> <span class="o">=</span> <span class="n">gm</span><span class="o">.</span><span class="n">limpiar_versiones_antiguas</span><span class="p">(</span><span class="s1">&#39;metricas_kpi&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.managers.gold_manager.GoldManager.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">minio_config</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/managers/gold_manager.html#GoldManager.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.managers.gold_manager.GoldManager.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el gestor de la capa Gold.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>minio_config</strong> – Configuración de MinIO</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Configura automáticamente el bucket ‘-gold’ según la configuración</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="extractors.html" class="btn btn-neutral float-left" title="etl.extractors - Extractores de Datos" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="writers.html" class="btn btn-neutral float-right" title="etl.writers - Escritores de Archivos" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

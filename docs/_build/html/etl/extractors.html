@@ -1,0 +1,318 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.extractors - Extractores de Datos &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="etl.managers - Gestores de Capas" href="managers.html" />
+    <link rel="prev" title="etl.table_processor - Procesador de Tablas" href="table_processor.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">etl.extractors - Extractores de Datos</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#etl.extractors.data_extractor.DataExtractor"><code class="docutils literal notranslate"><span class="pre">DataExtractor</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.data_extractor.DataExtractor.__init__"><code class="docutils literal notranslate"><span class="pre">DataExtractor.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.data_extractor.DataExtractor.extract_incremental"><code class="docutils literal notranslate"><span class="pre">DataExtractor.extract_incremental()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.extractors.table_inspector.TrackingColumnDetector"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TrackingColumnDetector.TIMESTAMP_CANDIDATES"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector.TIMESTAMP_CANDIDATES</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_numeric_type"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector.is_numeric_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_timestamp_type"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector.is_timestamp_type()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TrackingColumnDetector.detect"><code class="docutils literal notranslate"><span class="pre">TrackingColumnDetector.detect()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector"><code class="docutils literal notranslate"><span class="pre">TableInspector</span></code></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector.__init__"><code class="docutils literal notranslate"><span class="pre">TableInspector.__init__()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector.get_all_tables"><code class="docutils literal notranslate"><span class="pre">TableInspector.get_all_tables()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector.get_columns"><code class="docutils literal notranslate"><span class="pre">TableInspector.get_columns()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#etl.extractors.table_inspector.TableInspector.detect_tracking_column"><code class="docutils literal notranslate"><span class="pre">TableInspector.detect_tracking_column()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">etl.extractors - Extractores de Datos</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/etl/extractors.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-etl.extractors.data_extractor">
+<span id="etl-extractors-extractores-de-datos"></span><h1>etl.extractors - Extractores de Datos<a class="headerlink" href="#module-etl.extractors.data_extractor" title="Link to this heading"></a></h1>
+<p>Extracción incremental de datos desde PostgreSQL a DataFrames.</p>
+<p>Encapsula la lógica de construcción de queries de extracción incremental
+y ejecución, retornando pandas DataFrames listos para procesar.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.data_extractor.</span></span><span class="sig-name descname"><span class="pre">DataExtractor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Extractor incremental de datos desde PostgreSQL.</p>
+<p>Construye queries dinamicamente basadas en el tipo de columna de rastreo
+(timestamp o ID) y ejecuta extracción inicial o incremental.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_column</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tracking_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el extractor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>connection</strong> – Conexión SQLAlchemy activa a PostgreSQL</p></li>
+<li><p><strong>table_name</strong> – Nombre de la tabla a extraer</p></li>
+<li><p><strong>tracking_column</strong> – Columna para rastreo incremental (timestamp o ID)</p></li>
+<li><p><strong>tracking_type</strong> – Tipo de rastreo (‘timestamp’ o ‘id’)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.data_extractor.DataExtractor.extract_incremental">
+<span class="sig-name descname"><span class="pre">extract_incremental</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">last_value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">DataFrame</span></span></span><a class="reference internal" href="../_modules/etl/extractors/data_extractor.html#DataExtractor.extract_incremental"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.data_extractor.DataExtractor.extract_incremental" title="Link to this definition"></a></dt>
+<dd><p>Extrae datos nuevos desde el último valor procesado.</p>
+<p>Construye query dinámicamente:
+- Si <cite>last_value</cite> es None: extrae todos (carga inicial)
+- Si <cite>last_value</cite> existe: extrae solo registros con tracking_column &gt; last_value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>last_value</strong> – Último valor procesado (None para carga inicial)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>DataFrame con registros nuevos (posiblemente vacío)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>pd.DataFrame</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<p id="module-etl.extractors.table_inspector">Inspección de estructura de tablas en PostgreSQL.</p>
+<p>Proporciona funcionalidad para:
+- Obtener lista de todas las tablas
+- Inspeccionar columnas y tipos de datos
+- Detectar automáticamente la mejor columna para rastreo incremental</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.table_inspector.</span></span><span class="sig-name descname"><span class="pre">TrackingColumnDetector</span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Detector automático de columnas para rastreo incremental.</p>
+<p>Busca inteligentemente la mejor columna para usar en extracción incremental,
+siguiendo orden de preferencia: timestamp &gt; ID primario &gt; columna ‘id’.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.TIMESTAMP_CANDIDATES">
+<span class="sig-name descname"><span class="pre">TIMESTAMP_CANDIDATES</span></span><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">['created_at',</span> <span class="pre">'updated_at',</span> <span class="pre">'timestamp',</span> <span class="pre">'fecha_registro',</span> <span class="pre">'last_update']</span></em><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.TIMESTAMP_CANDIDATES" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.is_numeric_type">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_numeric_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.is_numeric_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_numeric_type" title="Link to this definition"></a></dt>
+<dd><p>Verifica si tipo es numérico.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.is_timestamp_type">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">is_timestamp_type</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">col_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.is_timestamp_type"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.is_timestamp_type" title="Link to this definition"></a></dt>
+<dd><p>Verifica si tipo es timestamp.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TrackingColumnDetector.detect">
+<em class="property"><span class="k"><span class="pre">static</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">detect</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">columns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TrackingColumnDetector.detect"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TrackingColumnDetector.detect" title="Link to this definition"></a></dt>
+<dd><p>Detecta la mejor columna para rastreo incremental.</p>
+<p>Prioridades (en orden):
+1. Timestamp (created_at, updated_at, timestamp, etc.)
+2. Clave primaria numérica (serial, integer, etc.)
+3. Columna ‘id’ numérica</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>columns</strong> – Lista de (nombre_columna, tipo_datos)</p></li>
+<li><p><strong>connection</strong> – Conexión a base de datos para consultar metadatos</p></li>
+<li><p><strong>table_name</strong> – Nombre de la tabla</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(nombre_columna, tipo_rastreo) o None si no detecta</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">etl.extractors.table_inspector.</span></span><span class="sig-name descname"><span class="pre">TableInspector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Inspector de estructura de tablas PostgreSQL.</p>
+<p>Proporciona métodos para explorar:
+- Lista de tablas disponibles
+- Columnas y tipos de datos
+- Detección automática de columna de rastreo</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">connection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Connection</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.__init__" title="Link to this definition"></a></dt>
+<dd><p>Inicializa el inspector.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>connection</strong> – Conexión SQLAlchemy activa a PostgreSQL</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.get_all_tables">
+<span class="sig-name descname"><span class="pre">get_all_tables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.get_all_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.get_all_tables" title="Link to this definition"></a></dt>
+<dd><p>Obtiene lista de todas las tablas en esquema ‘public’.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Nombres de tablas</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.get_columns">
+<span class="sig-name descname"><span class="pre">get_columns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.get_columns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.get_columns" title="Link to this definition"></a></dt>
+<dd><p>Obtiene columnas de una tabla con sus tipos de datos.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Lista de (nombre_columna, tipo_dato)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[Tuple]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="etl.extractors.table_inspector.TableInspector.detect_tracking_column">
+<span class="sig-name descname"><span class="pre">detect_tracking_column</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/etl/extractors/table_inspector.html#TableInspector.detect_tracking_column"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#etl.extractors.table_inspector.TableInspector.detect_tracking_column" title="Link to this definition"></a></dt>
+<dd><p>Detecta automáticamente la mejor columna para rastreo incremental.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_name</strong> – Nombre de la tabla</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>(nombre_columna, tipo) o (None, None) si no detecta</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="table_processor.html" class="btn btn-neutral float-left" title="etl.table_processor - Procesador de Tablas" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="managers.html" class="btn btn-neutral float-right" title="etl.managers - Gestores de Capas" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

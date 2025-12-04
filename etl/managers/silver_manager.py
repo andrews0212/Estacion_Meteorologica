@@ -1,43 +1,50 @@
-"""Gestor de la capa Silver y gestión de versiones.
+"""Gestor de capa Silver: datos limpios después de transformación.
 
-Este módulo implementa una estrategia simple de versiones (REPLACE) donde
-solo se mantiene la versión más reciente de cada tabla en el bucket Silver.
+Este módulo implements SilverManager, especialización de LayerManager para trabajar
+con el bucket Silver que contiene datos después de limpieza y transformación con PySpark.
 
-Nota: Hereda de LayerManager para eliminar redundancia de código.
-
-Funciones principales:
-- listar versiones por tabla
-- obtener la versión más reciente
-- eliminar versiones antiguas
-- obtener estadísticas (tamaño total, número de versiones)
+Estrategia: **REPLACE**
+- Mantiene solo la versión más reciente de cada tabla
+- Elimina automáticamente versiones antiguas para optimizar espacio
 """
 
 from .layer_manager import LayerManager
 
 
 class SilverManager(LayerManager):
-    """Gestiona archivos en capa Silver - Limpia versiones antiguas.
+    """Gestor especial para la capa Silver: datos limpios y transformados.
 
-    Hereda todas las funcionalidades de LayerManager configurando el sufijo
-    '-silver' para trabajar con el bucket meteo-silver.
-
-    Args:
-        minio_config: Instancia de configuración de MinIO con atributos
-            ``endpoint``, ``access_key``, ``secret_key`` y ``bucket``.
+    Hereda todas las funcionalidades de LayerManager, especializado para trabajar
+    con el bucket 'meteo-silver' que contiene datos después del procesamiento
+    PySpark de limpieza y normalización.
+    
+    La estrategia de versiones es REPLACE: solo mantiene la versión más reciente
+    de cada tabla para optimizar espacio de almacenamiento.
 
     Ejemplo::
 
         from config import MinIOConfig
         cfg = MinIOConfig()
         sm = SilverManager(cfg)
-        sm.limpiar_versiones_antiguas('sensor_readings')
+        
+        # Listar versiones de una tabla
+        versiones = sm.obtener_versiones_tabla('sensor_readings')
+        
+        # Obtener la más reciente
+        archivo = sm.obtener_archivo_reciente('sensor_readings')
+        
+        # Limpiar versiones antiguas
+        eliminados = sm.limpiar_versiones_antiguas('sensor_readings')
     """
     
     def __init__(self, minio_config):
         """
-        Inicializa el gestor de Silver.
+        Inicializa el gestor de la capa Silver.
         
         Args:
-            minio_config: Configuración de MinIO (MinIOConfig)
+            minio_config: Configuración de MinIO
+            
+        Note:
+            Configura automáticamente el bucket '-silver' según la configuración
         """
         super().__init__(minio_config, bucket_suffix='-silver')

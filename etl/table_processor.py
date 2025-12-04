@@ -1,4 +1,31 @@
-"""Procesamiento de tablas individuales con extracción incremental."""
+"""Procesamiento incremental de tablas individuales en el pipeline ETL.
+
+Este módulo orquesta la extracción incremental tabla por tabla:
+
+1. Detecta la columna de rastreo (timestamp o ID) automáticamente
+2. Consulta el estado anterior (.etl_state.json)
+3. Extrae solo registros nuevos desde el último procesado
+4. Serializa a CSV temporal
+5. Sube a MinIO (Bronze)
+6. Actualiza estado para próximo ciclo
+
+Ejemplo::
+
+    from sqlalchemy import create_engine
+    from etl.table_processor import TableProcessor
+    from etl.extractors import TableInspector
+    from etl.control.control_manager import ExtractionStateManager
+    
+    engine = create_engine("postgresql://...")
+    with engine.connect() as conn:
+        inspector = TableInspector(conn)
+        state_mgr = ExtractionStateManager()
+        state_mgr.initialize_state()
+        
+        processor = TableProcessor(conn, "sensor_readings", state_mgr, inspector, minio_cfg)
+        records = processor.process()
+        print(f"Procesados {records} registros")
+"""
 
 from typing import Optional
 from sqlalchemy import Connection
@@ -13,11 +40,15 @@ from config import MinIOConfig
 class TableProcessor:
     """Procesa una tabla individual con extracción incremental.
 
-    Se encarga de:
-    - Detectar columna de rastreo (timestamp o id)
-    - Extraer nuevos registros usando :class:`etl.data_extractor.DataExtractor`
-    - Guardar los datos en un archivo temporal y subirlos a MinIO
-    - Actualizar el estado de extracción (.etl_state.json) con el último valor extraído
+    Responsabilidades:
+    - Detectar automáticamente columna de rastreo (timestamp o ID)
+    - Recuperar último valor procesado del archivo de estado
+    - Extraer nuevos registros usando :class:`etl.extractors.DataExtractor`
+    - Serializar a archivo CSV temporal
+    - Subir a MinIO bucket Bronze
+    - Actualizar estado (.etl_state.json) con máximo valor procesado
+    
+    El procesamiento es incremental: nunca reprocesa los mismos datos dos veces.
     """
     
     def __init__(self,
@@ -27,14 +58,14 @@ class TableProcessor:
                  inspector: TableInspector,
                  minio_config: MinIOConfig):
         """
-        Inicializa procesador de tabla.
+        Inicializa el procesador para una tabla específica.
         
         Args:
-            connection: Conexión a PostgreSQL
-            table_name: Nombre de la tabla
-            state_manager: Gestor de estado de extracciones
-            inspector: Inspector de tablas
-            minio_config: Configuración de MinIO
+            connection: Conexión SQLAlchemy activa a PostgreSQL
+            table_name: Nombre de la tabla a procesar (ej: 'sensor_readings')
+            state_manager: Gestor de estado para rastrear progreso (.etl_state.json)
+            inspector: Inspector de tablas para detectar estructura
+            minio_config: Configuración de MinIO para cargar datos
         """
         self.connection = connection
         self.table_name = table_name
@@ -43,16 +74,20 @@ class TableProcessor:
         self.minio_config = minio_config
     
     def process(self) -> int:
-        """Procesa tabla completa con extracción incremental.
+        """
+        Procesa tabla completa con extracción incremental.
 
-        Workflow resumido:
-        1. Detectar columna incremental (ej: created_at o id)
-        2. Obtener último valor procesado desde .etl_state.json
-        3. Extraer registros nuevos
-        4. Si hay datos: escribir a archivo temporal, subir a MinIO y actualizar estado
+        Workflow:
+        1. **Detectar columna incremental**: Busca timestamp o ID automáticamente (ej: created_at, id)
+        2. **Consultar estado anterior**: Obtiene último valor procesado desde .etl_state.json
+        3. **Extraer registros nuevos**: Ejecuta query para > último_valor
+        4. **Si hay datos**: Serializa a CSV, sube a MinIO y actualiza estado
 
         Returns:
-            Cantidad de registros procesados (int)
+            int: Cantidad de registros nuevos procesados en esta tabla
+            
+        Nota:
+            Si no detecta columna de rastreo, retorna 0 y registra advertencia.
         """
         print(f"\nProcesando tabla: {self.table_name}")
         
@@ -86,28 +121,25 @@ class TableProcessor:
         return 0
     
     def _process_extracted_data(self, df: pd.DataFrame, tracking_column: str) -> int:
-        """Procesa datos extraídos y los sube a MinIO.
+        """
+        Procesa datos extraídos y los sube a MinIO.
 
-        Este método realiza:
-        1. Serializar el ``DataFrame`` a un archivo temporal (CSV)
-        2. Subir el archivo al bucket Bronce usando :class:`MinIOUploader`
-        3. Actualizar el estado con el valor máximo de la columna de rastreo
+        Pasos:
+        1. Serializar el DataFrame a archivo CSV temporal
+        2. Subir el archivo al bucket Bronze en MinIO
+        3. Actualizar estado (.etl_state.json) con valor máximo de columna de rastreo
+        4. Limpiar archivo temporal
 
         Args:
-            df (pandas.DataFrame): DataFrame con los registros a procesar.
-            tracking_column (str): Nombre de la columna usada para extracción incremental.
+            df: DataFrame con registros nuevos a procesar
+            tracking_column: Nombre de la columna usada para rastreo incremental
 
         Returns:
-            int: Cantidad de registros procesados (len(df)).
+            int: Cantidad de registros procesados (len(df))
 
-        Ejemplo::
-
-            processor = TableProcessor(conn, 'sensor_readings', state_manager, inspector, minio_cfg)
-            count = processor._process_extracted_data(df, 'created_at')
-
-        Notas:
-            - El método maneja la limpieza del archivo temporal aunque la subida falle.
-            - Actualiza el estado (.etl_state.json) con el valor máximo encontrado en ``tracking_column``.
+        Nota:
+            La limpieza de archivo temporal ocurre incluso si la subida a MinIO falla,
+            evitando acumulación de archivos temporales.
         """
         count = len(df)
         print(f"   📦 Registros nuevos: {count}")

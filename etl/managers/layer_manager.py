@@ -1,7 +1,13 @@
-"""Base abstracta para gestores de capas (Silver, Gold, etc).
+"""Base abstracta para gestores de capas (Silver, Gold) en MinIO.
 
-Elimina redundancia entre SilverManager y GoldManager proporcionando
-una clase base con funcionalidades comunes.
+Proporciona funcionalidad común para administrar archivos en buckets de capas,
+eliminando redundancia entre SilverManager y GoldManager.
+
+Funcionalidades:
+- Listar versiones históricas de archivos por tabla
+- Obtener versión más reciente
+- Eliminar versiones antiguas (estrategia REPLACE)
+- Calcular estadísticas de almacenamiento
 """
 
 from typing import List, Optional, Dict, Any
@@ -9,21 +15,21 @@ from minio import Minio
 
 
 class LayerManager:
-    """Clase base para gestores de capas (Silver, Gold, etc).
+    """Gestor base para capas de datos (Silver, Gold, etc) en MinIO.
     
-    Implementa funcionalidades comunes para listar, eliminar y gestionar
-    versiones de archivos en buckets de MinIO.
+    Implementa operaciones comunes para gestionar versiones de archivos en buckets:
+    - Listar archivos por tabla con rastreo de versiones
+    - Limpiar versiones antiguas (mantener solo la más reciente)
+    - Calcular estadísticas de uso de almacenamiento
+    
+    Estrategia de versiones: **REPLACE**
+    - Sobrescribe versiones antiguas con nuevas automáticamente
+    - Mantiene solo los datos más recientes de cada tabla
+    - Optimiza espacio de almacenamiento
     
     Args:
         minio_config: Configuración de MinIO
-        bucket_suffix: Sufijo del bucket (ej: '-silver' para bucket 'meteo-silver')
-        
-    Ejemplo::
-    
-        from config import MinIOConfig
-        cfg = MinIOConfig()
-        manager = LayerManager(cfg, '-silver')
-        versiones = manager.obtener_versiones_tabla('sensor_readings')
+        bucket_suffix: Sufijo del bucket (ej: '-silver' para 'meteo-silver', '-gold' para 'meteo-gold')
     """
     
     def __init__(self, minio_config, bucket_suffix: str):
@@ -31,8 +37,12 @@ class LayerManager:
         Inicializa el gestor de capa.
         
         Args:
-            minio_config: Configuración de MinIO (MinIOConfig)
-            bucket_suffix: Sufijo del bucket (ej: '-silver', '-gold')
+            minio_config: Configuración de MinIO (tipo MinIOConfig)
+            bucket_suffix: Sufijo del bucket para esta capa (ej: '-silver', '-gold')
+            
+        Note:
+            El bucket se construye reemplazando '-bronze' por el sufijo en el bucket
+            configurado (ej: 'meteo-bronze' → 'meteo-silver')
         """
         self.endpoint = minio_config.endpoint
         self.access_key = minio_config.access_key
@@ -49,13 +59,13 @@ class LayerManager:
     
     def obtener_versiones_tabla(self, tabla: str) -> List[str]:
         """
-        Obtiene TODOS los archivos de una tabla en la capa, ordenados por fecha.
+        Obtiene historial de versiones de una tabla (todos los archivos CSV).
         
         Args:
-            tabla (str): Nombre de la tabla (ej: ``sensor_readings``, ``metricas_kpi``).
+            tabla: Nombre de la tabla (ej: 'sensor_readings')
             
         Returns:
-            List[str]: Lista de nombres de archivos ordenados (antiguos → recientes).
+            List[str]: Lista de nombres de archivos ordenados cronológicamente (antiguos → recientes)
         """
         try:
             objects = self.client.list_objects(self.bucket_layer, prefix=tabla, recursive=True)
@@ -73,13 +83,13 @@ class LayerManager:
     
     def obtener_archivo_reciente(self, tabla: str) -> Optional[str]:
         """
-        Obtiene el archivo más reciente de una tabla.
+        Obtiene el archivo más reciente de una tabla (última versión).
         
         Args:
-            tabla (str): Nombre de la tabla.
+            tabla: Nombre de la tabla
             
         Returns:
-            Optional[str]: Nombre del archivo más reciente o None.
+            Optional[str]: Nombre del archivo más reciente o None si no existe
         """
         versiones = self.obtener_versiones_tabla(tabla)
         return versiones[-1] if versiones else None
@@ -103,21 +113,19 @@ class LayerManager:
             return False
     
     def limpiar_versiones_antiguas(self, tabla: str, mantener_actual: bool = True) -> int:
-        """Elimina archivos antiguos según la estrategia REPLACE.
+        """
+        Limpia versiones antiguas según estrategia REPLACE.
+
+        Workflow:
+        - Si `mantener_actual=True`: Elimina todas menos la más reciente (recomendado)
+        - Si `mantener_actual=False`: Elimina todas las versiones
 
         Args:
-            tabla (str): Nombre de la tabla (p. ej. ``sensor_readings``, ``metricas_kpi``).
-            mantener_actual (bool): Si ``True`` mantiene solo la versión más reciente;
-                si ``False`` elimina todas las versiones.
+            tabla: Nombre de la tabla (ej: 'sensor_readings')
+            mantener_actual: Si True, mantiene la versión más reciente
 
         Returns:
-            int: Cantidad de archivos eliminados.
-
-        Ejemplo::
-
-            manager = LayerManager(cfg, '-silver')
-            removed = manager.limpiar_versiones_antiguas('sensor_readings')
-            print(f"Archivos eliminados: {removed}")
+            int: Cantidad de archivos eliminados
         """
         try:
             versiones = self.obtener_versiones_tabla(tabla)
@@ -150,14 +158,18 @@ class LayerManager:
     
     def obtener_estadisticas_tabla(self, tabla: str) -> Dict[str, Any]:
         """
-        Obtiene estadísticas de versiones de una tabla.
+        Calcula estadísticas de almacenamiento para una tabla.
         
         Args:
-            tabla (str): Nombre de la tabla.
+            tabla: Nombre de la tabla
             
         Returns:
-            Dict[str, Any]: Diccionario con estadísticas (tabla, total_versiones, versión_antigua, 
-            versión_reciente, espacio_total_mb).
+            Dict con claves:
+            - tabla: Nombre de la tabla
+            - total_versiones: Cantidad de versiones almacenadas
+            - version_antigua: Nombre del archivo más antiguo
+            - version_reciente: Nombre del archivo más reciente
+            - espacio_total_mb: Tamaño total en megabytes
         """
         try:
             versiones = self.obtener_versiones_tabla(tabla)

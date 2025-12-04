@@ -1,7 +1,7 @@
-"""Gestión de subida de archivos a MinIO.
+"""Carga de archivos a MinIO.
 
-Proporciona una pequeña envoltura sobre la librería ``minio`` para
-subir archivos locales al bucket configurado en ``MinIOConfig``.
+Encapsula la funcionalidad de subida de archivos a MinIO, permitiendo
+almacenamiento seguro de datos en capas (Bronze, Silver, Gold).
 """
 
 from typing import Optional
@@ -10,18 +10,18 @@ from config import MinIOConfig
 
 
 class MinIOUploader:
-    """Gestiona subida de archivos a MinIO.
-
-    Args:
-        minio_config (config.minio_config.MinIOConfig): Instancia de configuración de MinIO.
+    """Gestor de carga de archivos a MinIO.
+    
+    Proporciona interfaz simple para subir archivos locales al bucket Bronze
+    con organización automática por tabla.
     """
     
     def __init__(self, minio_config: MinIOConfig):
         """
-        Inicializa uploader.
+        Inicializa el uploader de MinIO.
         
         Args:
-            minio_config (MinIOConfig): Configuración de MinIO.
+            minio_config: Configuración de MinIO con credenciales y endpoint
         """
         self.config = minio_config
         self.client = Minio(
@@ -32,21 +32,18 @@ class MinIOUploader:
         )
     
     def upload(self, local_path: str, table_name: str, file_name: str) -> str:
-        """Sube archivo a MinIO y retorna la ruta en el bucket.
+        """
+        Sube un archivo local al bucket Bronze en MinIO.
+
+        Estructura de carga: ``{bucket}/{table_name}/{file_name}``
 
         Args:
-            local_path (str): Ruta local del archivo.
-            table_name (str): Nombre lógico de la tabla (se usa como prefijo).
-            file_name (str): Nombre del archivo objetivo.
+            local_path: Ruta local absoluta del archivo a subir
+            table_name: Nombre de la tabla (usada como prefijo organizador)
+            file_name: Nombre del archivo destino
 
         Returns:
-            str: Ruta completa en MinIO: ``{bucket}/{table_name}/{file_name}``.
-
-        Ejemplo::
-
-            uploader = MinIOUploader(cfg)
-            uri = uploader.upload('C:/tmp/sensor.csv', 'sensor_readings', 'sensor_bronce_20250101.csv')
-            # uri -> 'meteo-bronze/sensor_readings/sensor_bronce_20250101.csv'
+            str: URI completa en MinIO
         """
         object_name = f"{table_name}/{file_name}"
         self.client.fput_object(self.config.bucket, object_name, local_path)

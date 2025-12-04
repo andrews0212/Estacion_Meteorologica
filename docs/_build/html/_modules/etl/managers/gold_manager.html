@@ -1,0 +1,171 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.managers.gold_manager &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">etl.managers.gold_manager</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for etl.managers.gold_manager</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Gestor de capa Gold: KPIs y métricas agregadas.</span>
+
+<span class="sd">Este módulo implementa GoldManager, especialización de LayerManager para trabajar</span>
+<span class="sd">con el bucket Gold que contiene KPIs y métricas agregadas calculadas con PySpark.</span>
+
+<span class="sd">Estrategia: **REPLACE**</span>
+<span class="sd">- Mantiene solo la versión más reciente de cada tabla</span>
+<span class="sd">- Elimina automáticamente versiones antiguas para optimizar espacio</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.layer_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">LayerManager</span>
+
+
+<div class="viewcode-block" id="GoldManager">
+<a class="viewcode-back" href="../../../etl/managers.html#etl.managers.gold_manager.GoldManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GoldManager</span><span class="p">(</span><span class="n">LayerManager</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Gestor especial para la capa Gold: KPIs y métricas agregadas.</span>
+
+<span class="sd">    Hereda todas las funcionalidades de LayerManager, especializado para trabajar</span>
+<span class="sd">    con el bucket &#39;meteo-gold&#39; que contiene KPIs, métricas agregadas y análisis</span>
+<span class="sd">    calculados con PySpark sobre los datos de Silver.</span>
+<span class="sd">    </span>
+<span class="sd">    La estrategia de versiones es REPLACE: solo mantiene la versión más reciente</span>
+<span class="sd">    de cada tabla para optimizar espacio de almacenamiento.</span>
+
+<span class="sd">    Ejemplo::</span>
+
+<span class="sd">        from config import MinIOConfig</span>
+<span class="sd">        cfg = MinIOConfig()</span>
+<span class="sd">        gm = GoldManager(cfg)</span>
+<span class="sd">        </span>
+<span class="sd">        # Listar versiones de una tabla</span>
+<span class="sd">        versiones = gm.obtener_versiones_tabla(&#39;metricas_kpi&#39;)</span>
+<span class="sd">        </span>
+<span class="sd">        # Obtener la más reciente</span>
+<span class="sd">        archivo = gm.obtener_archivo_reciente(&#39;metricas_kpi&#39;)</span>
+<span class="sd">        </span>
+<span class="sd">        # Limpiar versiones antiguas</span>
+<span class="sd">        eliminados = gm.limpiar_versiones_antiguas(&#39;metricas_kpi&#39;)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="GoldManager.__init__">
+<a class="viewcode-back" href="../../../etl/managers.html#etl.managers.gold_manager.GoldManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">minio_config</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el gestor de la capa Gold.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            minio_config: Configuración de MinIO</span>
+<span class="sd">            </span>
+<span class="sd">        Note:</span>
+<span class="sd">            Configura automáticamente el bucket &#39;-gold&#39; según la configuración</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">minio_config</span><span class="p">,</span> <span class="n">bucket_suffix</span><span class="o">=</span><span class="s1">&#39;-gold&#39;</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

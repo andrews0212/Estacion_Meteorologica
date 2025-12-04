@@ -1,8 +1,12 @@
-"""Utilidades para operaciones de base de datos y construcción de queries.
+"""Utilidades para operaciones de base de datos y construcción de queries SQL.
 
-Contiene funciones reutilizables para ejecutar queries con SQLAlchemy y
-construir consultas usadas por el pipeline (listar tablas, obtener columnas,
-consulta incremental, etc.).
+Encapsula operaciones comunes de ejecución de queries y construcción de sentencias SQL
+usadas por el pipeline ETL para inspección de tablas y extracción incremental.
+
+Proporciona:
+- Ejecución de queries con manejo robusto de errores
+- Métodos para fetch (uno, todos, escalar)
+- Constructor de queries reutilizables para operaciones típicas
 """
 
 from typing import List, Tuple, Optional, Any
@@ -11,24 +15,29 @@ from sqlalchemy.sql import bindparam
 
 
 class DatabaseUtils:
-    """Métodos reutilizables para operaciones de BD.
+    """Métodos utilitarios reutilizables para operaciones de base de datos.
 
-    Este wrapper ofrece manejo básico de errores y trazas para facilitar
-    el debugging durante la generación de documentación y la ejecución.
+    Wrapper sobre SQLAlchemy que proporciona:
+    - Ejecución de queries con parámetros nombrados
+    - Métodos fetch convenientes (uno, todos, escalar)
+    - Manejo de errores y trazas para debugging
     """
     
     @staticmethod
     def execute_query(connection: Connection, query: str, params: dict = None) -> Any:
         """
-        Ejecuta una query y retorna resultado.
+        Ejecuta una query SQL y retorna resultado.
         
         Args:
-            connection (sqlalchemy.Connection): Conexión SQLAlchemy activa
-            query (str): Query SQL con parámetros nombrados (:nombre)
-            params (dict | None): Diccionario con parámetros
+            connection: Conexión SQLAlchemy activa
+            query: Query SQL con parámetros nombrados (formato :nombre)
+            params: Diccionario con valores de parámetros
             
         Returns:
-            Any: Resultado de la query (CursorResult)
+            Any: CursorResult con los resultados
+            
+        Raises:
+            Exception: Si hay error en ejecución de query
         """
         try:
             # SQLAlchemy text() requiere parámetros nombrados
@@ -43,12 +52,13 @@ class DatabaseUtils:
     
     @staticmethod
     def fetch_one(connection: Connection, query: str, params: dict = None) -> Optional[Tuple]:
-        """Obtiene un resultado.
+        """
+        Obtiene una única fila.
         
         Args:
-            connection (sqlalchemy.Connection): Conexión activa
-            query (str): Query SQL
-            params (dict | None): Parámetros
+            connection: Conexión SQLAlchemy activa
+            query: Query SQL
+            params: Diccionario de parámetros
             
         Returns:
             tuple | None: Primera fila o None
@@ -58,27 +68,29 @@ class DatabaseUtils:
     
     @staticmethod
     def fetch_all(connection: Connection, query: str, params: dict = None) -> List[Tuple]:
-        """Obtiene todos los resultados.
+        """
+        Obtiene todas las filas del resultado.
         
         Args:
-            connection (sqlalchemy.Connection): Conexión activa
-            query (str): Query SQL
-            params (dict | None): Parámetros
+            connection: Conexión SQLAlchemy activa
+            query: Query SQL
+            params: Diccionario de parámetros
             
         Returns:
-            list: Lista de tuplas
+            list: Lista de tuplas (filas)
         """
         result = DatabaseUtils.execute_query(connection, query, params)
         return result.fetchall()
     
     @staticmethod
     def fetch_scalar(connection: Connection, query: str, params: dict = None) -> Optional[Any]:
-        """Obtiene un valor escalar.
+        """
+        Obtiene un valor escalar (primera columna de primera fila).
         
         Args:
-            connection (sqlalchemy.Connection): Conexión activa
-            query (str): Query SQL
-            params (dict | None): Parámetros
+            connection: Conexión SQLAlchemy activa
+            query: Query SQL
+            params: Diccionario de parámetros
             
         Returns:
             Any | None: Valor escalar o None
@@ -88,12 +100,13 @@ class DatabaseUtils:
     
     @staticmethod
     def execute_and_commit(connection: Connection, query: str, params: dict = None) -> int:
-        """Ejecuta query y hace commit. Retorna filas afectadas.
+        """
+        Ejecuta query de modificación y confirma los cambios.
         
         Args:
-            connection (sqlalchemy.Connection): Conexión activa
-            query (str): Query SQL
-            params (dict | None): Parámetros
+            connection: Conexión SQLAlchemy activa
+            query: Query SQL (INSERT, UPDATE, DELETE)
+            params: Diccionario de parámetros
             
         Returns:
             int: Cantidad de filas afectadas
@@ -104,10 +117,10 @@ class DatabaseUtils:
 
 
 class TableQueryBuilder:
-    """Constructor de queries para operaciones con tablas.
+    """Constructor de queries SQL comunes para operaciones con tablas.
     
-    Proporciona métodos estáticos para construir queries comunes
-    de inspección de tablas y extracción incremental.
+    Proporciona métodos estáticos para construir queries SQL reutilizables
+    para inspección de estructura de tablas en PostgreSQL.
     """
     
     # Queries reutilizables
@@ -138,22 +151,24 @@ class TableQueryBuilder:
     
     @staticmethod
     def get_list_tables_query() -> str:
-        """Retorna query para listar tablas.
+        """
+        Retorna query para listar todas las tablas del esquema público.
         
         Returns:
-            str: Query SQL para listar todas las tablas en esquema 'public'
+            str: Query SQL para obtener lista de tablas
         """
         return TableQueryBuilder.QUERY_LIST_TABLES
     
     @staticmethod
     def get_columns_query(table_name: str) -> Tuple[str, dict]:
-        """Retorna query y params para obtener columnas.
+        """
+        Retorna query y parámetros para obtener columnas de una tabla.
         
         Args:
-            table_name (str): Nombre de la tabla
+            table_name: Nombre de la tabla
             
         Returns:
-            tuple: (query, params_dict)
+            tuple: (query_sql, params_dict)
         """
         return (
             TableQueryBuilder.QUERY_GET_COLUMNS,
@@ -162,13 +177,14 @@ class TableQueryBuilder:
     
     @staticmethod
     def get_primary_key_query(table_name: str) -> Tuple[str, dict]:
-        """Retorna query y params para obtener primary key.
+        """
+        Retorna query y parámetros para obtener nombre de clave primaria.
         
         Args:
-            table_name (str): Nombre de la tabla
+            table_name: Nombre de la tabla
             
         Returns:
-            tuple: (query, params_dict)
+            tuple: (query_sql, params_dict)
         """
         return (
             TableQueryBuilder.QUERY_GET_PRIMARY_KEY,

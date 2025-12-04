@@ -1,0 +1,287 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>etl.pipeline &mdash; Estación Meteorológica 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Estación Meteorológica
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Documentación</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">Referencia de Módulos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../guia_uso.html">Guía de Uso</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Módulos Principales</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/main.html">main - Punto de Entrada</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/pipeline.html">etl.pipeline - Pipeline Principal</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/table_processor.html">etl.table_processor - Procesador de Tablas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/extractors.html">etl.extractors - Extractores de Datos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/managers.html">etl.managers - Gestores de Capas</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/writers.html">etl.writers - Escritores de Archivos</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/uploaders.html">etl.uploaders - Cargadores a MinIO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/utils.html">etl.utils - Utilidades</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/control.html">etl.control - Control y Estado</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../etl/config.html">config - Configuración</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Estación Meteorológica</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">etl.pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for etl.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Pipeline principal de ETL que coordina extracción, transformación y carga en capas.</span>
+
+<span class="sd">El pipeline orquesta las siguientes etapas:</span>
+
+<span class="sd">1. **Inicialización del estado**: Carga o crea archivo `.etl_state.json` para rastreo incremental</span>
+<span class="sd">2. **Inspección de tablas**: Detecta tablas disponibles y columnas de rastreo (timestamp o ID)</span>
+<span class="sd">3. **Extracción incremental**: Por cada tabla, extrae solo registros nuevos desde el último valor conocido</span>
+<span class="sd">4. **Serialización**: Escribe datos extraídos en archivos CSV temporales</span>
+<span class="sd">5. **Carga a MinIO**: Sube archivos al bucket Bronze en MinIO (almacenamiento S3 compatible)</span>
+<span class="sd">6. **Actualización de estado**: Registra el último valor extraído para próximos ciclos</span>
+
+<span class="sd">El módulo utiliza SQLAlchemy con pooling de conexiones para mejor rendimiento y escalabilidad.</span>
+
+<span class="sd">Ejemplo::</span>
+
+<span class="sd">    from config import DatabaseConfig, MinIOConfig</span>
+<span class="sd">    from etl.pipeline import ETLPipeline</span>
+<span class="sd">    </span>
+<span class="sd">    db_cfg = DatabaseConfig()</span>
+<span class="sd">    minio_cfg = MinIOConfig()</span>
+<span class="sd">    pipeline = ETLPipeline(db_cfg, minio_cfg)</span>
+<span class="sd">    </span>
+<span class="sd">    # Ejecutar un batch completo</span>
+<span class="sd">    total_records = pipeline.process_batch()</span>
+<span class="sd">    </span>
+<span class="sd">    # O ejecutar continuamente</span>
+<span class="sd">    pipeline.run_continuous(interval_seconds=300)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy</span><span class="w"> </span><span class="kn">import</span> <span class="n">create_engine</span><span class="p">,</span> <span class="n">Connection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">sqlalchemy.pool</span><span class="w"> </span><span class="kn">import</span> <span class="n">QueuePool</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.control.control_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExtractionStateManager</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.extractors</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableInspector</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">etl.table_processor</span><span class="w"> </span><span class="kn">import</span> <span class="n">TableProcessor</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">config</span><span class="w"> </span><span class="kn">import</span> <span class="n">DatabaseConfig</span><span class="p">,</span> <span class="n">MinIOConfig</span>
+
+
+<div class="viewcode-block" id="ETLPipeline">
+<a class="viewcode-back" href="../../etl/pipeline.html#etl.pipeline.ETLPipeline">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ETLPipeline</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pipeline principal que coordina la extracción ETL.&quot;&quot;&quot;</span>
+    
+<div class="viewcode-block" id="ETLPipeline.__init__">
+<a class="viewcode-back" href="../../etl/pipeline.html#etl.pipeline.ETLPipeline.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">db_config</span><span class="p">:</span> <span class="n">DatabaseConfig</span><span class="p">,</span> <span class="n">minio_config</span><span class="p">:</span> <span class="n">MinIOConfig</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Inicializa el pipeline ETL.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            db_config: Configuración de conexión a PostgreSQL (servidor, puerto, BD, credenciales).</span>
+<span class="sd">            minio_config: Configuración de acceso a MinIO (endpoint, credenciales, buckets).</span>
+<span class="sd">            </span>
+<span class="sd">        Nota:</span>
+<span class="sd">            El engine SQLAlchemy se crea con pooling automático para reutilizar conexiones.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">db_config</span> <span class="o">=</span> <span class="n">db_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span> <span class="o">=</span> <span class="n">minio_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">engine</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_engine</span><span class="p">()</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create_engine</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Crea engine SQLAlchemy con pool de conexiones.</span>
+<span class="sd">        </span>
+<span class="sd">        Configuración de pool:</span>
+<span class="sd">        - **pool_size=5**: Mantiene 5 conexiones por defecto</span>
+<span class="sd">        - **max_overflow=10**: Permite hasta 10 conexiones adicionales bajo demanda</span>
+<span class="sd">        - **poolclass=QueuePool**: Usa cola FIFO para gestionar conexiones</span>
+<span class="sd">        </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            sqlalchemy.engine.Engine: Engine configurado listo para usar.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">create_engine</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">db_config</span><span class="o">.</span><span class="n">connection_url</span><span class="p">,</span>
+            <span class="n">poolclass</span><span class="o">=</span><span class="n">QueuePool</span><span class="p">,</span>
+            <span class="n">pool_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">max_overflow</span><span class="o">=</span><span class="mi">10</span>
+        <span class="p">)</span>
+    
+<div class="viewcode-block" id="ETLPipeline.process_batch">
+<a class="viewcode-back" href="../../etl/pipeline.html#etl.pipeline.ETLPipeline.process_batch">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">process_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Procesa un batch completo de todas las tablas disponibles.</span>
+
+<span class="sd">        Workflow:</span>
+<span class="sd">        1. Abre conexión reutilizable del pool</span>
+<span class="sd">        2. Inicializa gestor de control (carga o crea `.etl_state.json`)</span>
+<span class="sd">        3. Itera por cada tabla del esquema</span>
+<span class="sd">        4. Aplica extracción incremental usando :class:`etl.table_processor.TableProcessor`</span>
+<span class="sd">        5. Acumula total de registros nuevos</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Total de registros procesados en este batch (suma de todas las tablas).</span>
+<span class="sd">            </span>
+<span class="sd">        Nota:</span>
+<span class="sd">            Si ocurre error crítico de conexión, registra el problema y retorna 0.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">--- INICIO DE BATCH: </span><span class="si">{</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1"> %H:%M:%S&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2"> ---&quot;</span><span class="p">)</span>
+        
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">engine</span><span class="o">.</span><span class="n">connect</span><span class="p">()</span> <span class="k">as</span> <span class="n">connection</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_execute_batch</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;❌ ERROR CRÍTICO EN CONEXIÓN: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="c1"># Log encoding issues specifically</span>
+            <span class="k">if</span> <span class="s2">&quot;utf-8&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">&quot;codec&quot;</span> <span class="ow">in</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   💡 SUGERENCIA: Problemas de encoding en PostgreSQL&quot;</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;   Intente restaurar la BD con encoding UTF-8&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mi">0</span></div>
+
+    
+    <span class="k">def</span><span class="w"> </span><span class="nf">_execute_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">connection</span><span class="p">:</span> <span class="n">Connection</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta procesamiento de todas las tablas con una conexión activa.</span>
+<span class="sd">        </span>
+<span class="sd">        Pasos:</span>
+<span class="sd">        1. Inicializa el gestor de estado (.etl_state.json) si no existe</span>
+<span class="sd">        2. Obtiene lista de todas las tablas del esquema &#39;public&#39;</span>
+<span class="sd">        3. Para cada tabla: crea TableProcessor y ejecuta extracción incremental</span>
+<span class="sd">        4. Suma total de registros procesados</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            connection: Conexión SQLAlchemy activa a PostgreSQL</span>
+<span class="sd">            </span>
+<span class="sd">        Returns:</span>
+<span class="sd">            int: Total de registros nuevos procesados en todas las tablas.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Inicializar gestor de estado (.etl_state.json)</span>
+        <span class="n">state_manager</span> <span class="o">=</span> <span class="n">ExtractionStateManager</span><span class="p">()</span>
+        <span class="n">state_manager</span><span class="o">.</span><span class="n">initialize_state</span><span class="p">()</span>
+        
+        <span class="c1"># Obtener tabla a procesar</span>
+        <span class="n">inspector</span> <span class="o">=</span> <span class="n">TableInspector</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span>
+        <span class="n">tables</span> <span class="o">=</span> <span class="n">inspector</span><span class="o">.</span><span class="n">get_all_tables</span><span class="p">()</span>
+        
+        <span class="n">total_records</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+            <span class="n">processor</span> <span class="o">=</span> <span class="n">TableProcessor</span><span class="p">(</span><span class="n">connection</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">state_manager</span><span class="p">,</span> <span class="n">inspector</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">minio_config</span><span class="p">)</span>
+            <span class="n">total_records</span> <span class="o">+=</span> <span class="n">processor</span><span class="o">.</span><span class="n">process</span><span class="p">()</span>
+        
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">🎯 RESUMEN: </span><span class="si">{</span><span class="n">total_records</span><span class="si">}</span><span class="s2"> registros nuevos en este batch.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">total_records</span>
+    
+<div class="viewcode-block" id="ETLPipeline.run_continuous">
+<a class="viewcode-back" href="../../etl/pipeline.html#etl.pipeline.ETLPipeline.run_continuous">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_continuous</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interval_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Ejecuta el pipeline continuamente con intervalos fijos.</span>
+<span class="sd">        </span>
+<span class="sd">        El sistema ejecuta `process_batch()` repetidamente, esperando `interval_seconds`</span>
+<span class="sd">        entre cada iteración. Útil para sincronización automática en producción.</span>
+<span class="sd">        </span>
+<span class="sd">        Args:</span>
+<span class="sd">            interval_seconds: Intervalo en segundos entre batches (default: 300s = 5 min).</span>
+<span class="sd">            </span>
+<span class="sd">        Nota:</span>
+<span class="sd">            Presione Ctrl+C para detener la ejecución.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">process_batch</span><span class="p">()</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Esperando </span><span class="si">{</span><span class="n">interval_seconds</span><span class="si">}</span><span class="s2"> segundos...&quot;</span><span class="p">)</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">interval_seconds</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">✓ Pipeline detenido&quot;</span><span class="p">)</span></div>
+</div>
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, andrews0212.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

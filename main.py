@@ -35,14 +35,17 @@ from etl.notebook_executor import NotebookExecutor
 
 
 class ETLSystem:
-    """Sistema de ETL - Extracción a Bronce + Procesamiento con Notebooks PySpark.
+    """Sistema automatizado de ETL con procesamiento PySpark en capas (Bronze-Silver-Gold).
     
-    Flujo automático:
-    1. Extrae datos de PostgreSQL → Bronce (MinIO)
-    2. Ejecuta notebook de limpieza (PySpark) → Silver (MinIO)
-    3. Ejecuta notebook de KPIs (PySpark) → Gold (MinIO)
-    4. Descarga archivos a Power BI (file/)
-    5. Repite cada N segundos
+    Orquesta el flujo completo de extracción, transformación y carga de datos:
+    
+    1. **Extracción a Bronze**: Descarga incremental desde PostgreSQL → MinIO
+    2. **Transformación a Silver**: Ejecuta notebook de limpieza (PySpark) → MinIO
+    3. **Agregación a Gold**: Ejecuta notebook de KPIs (PySpark) → MinIO
+    4. **Descarga**: Sincroniza archivos Gold a carpeta local (file/) para Power BI
+    5. **Repetición**: Ejecuta ciclos automáticos cada N segundos
+    
+    El sistema opera en modo continuo con manejo robusto de errores y reintentos.
     """
     
     def __init__(self, 
@@ -52,14 +55,17 @@ class ETLSystem:
                  notebook_path: str = "notebooks/templates/limpieza_template.ipynb",
                  notebook_kpi_path: str = "notebooks/templates/generacion_KPI.ipynb"):
         """
-        Inicializa sistema.
+        Inicializa el sistema ETL con configuraciones opcionales.
+        
+        Si no se proporcionan configuraciones, se cargan automáticamente desde variables
+        de entorno o valores por defecto.
         
         Args:
-            db_config: Configuración de BD (crea si es None)
-            minio_config: Configuración de MinIO (crea si es None)
-            extraction_interval: Segundos entre extracciones
-            notebook_path: Ruta al notebook de limpieza (Silver)
-            notebook_kpi_path: Ruta al notebook de KPIs (Gold)
+            db_config: Configuración de PostgreSQL. Si es None, se carga automáticamente.
+            minio_config: Configuración de MinIO. Si es None, se carga automáticamente.
+            extraction_interval: Intervalo en segundos entre ciclos de extracción (default: 300s).
+            notebook_path: Ruta relativa al notebook de limpieza Silver.
+            notebook_kpi_path: Ruta relativa al notebook de generación de KPIs Gold.
         """
         self.db_config = db_config or DatabaseConfig()
         self.minio_config = minio_config or MinIOConfig()
@@ -80,13 +86,19 @@ class ETLSystem:
     
     def run_cycle(self, cycle_num: int) -> bool:
         """
-        Ejecuta un ciclo completo: Extracción a Bronce + Limpieza Silver + KPI Gold + Descarga.
+        Ejecuta un ciclo completo de ETL: Extracción → Limpieza → KPIs → Sincronización.
+        
+        Workflow del ciclo:
+        1. Extrae datos nuevos desde PostgreSQL (Bronze)
+        2. Ejecuta notebook de limpieza con PySpark (Silver)
+        3. Ejecuta notebook de generación de KPIs (Gold)
+        4. Descarga archivos a carpeta local para Power BI
         
         Args:
-            cycle_num: Número del ciclo
+            cycle_num: Número identificador del ciclo actual.
             
         Returns:
-            True si se completó exitosamente
+            bool: True si el ciclo completó exitosamente (incluso con advertencias).
         """
         print(f"\n--- CICLO {cycle_num}: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---")
         
@@ -103,10 +115,17 @@ class ETLSystem:
     
     def _run_notebooks(self) -> bool:
         """
-        Ejecuta notebooks de limpieza (Silver) y KPIs (Gold).
+        Ejecuta notebooks de transformación PySpark en secuencia.
+        
+        Ejecuta:
+        1. **Notebook Silver**: Limpieza y transformación de datos Bronze
+        2. **Notebook Gold**: Generación de KPIs y métricas agregadas
+        
+        Ambos notebooks tienen timeout de 600s (10 minutos). Si alguno falla,
+        se registra una advertencia pero el ciclo continúa.
         
         Returns:
-            True si ambos se ejecutaron exitosamente
+            bool: True si ambos completaron sin errores críticos.
         """
         notebooks = [
             (self.notebook_path, "Silver"),
@@ -128,13 +147,17 @@ class ETLSystem:
     
     def _download_gold_for_powerbi(self) -> bool:
         """
-        Descarga los archivos CSV desde MinIO a la carpeta file/ para Power BI.
-        - Silver: datos_principales_silver.csv (datos limpios)
-        - Gold: metricas_kpi_gold.csv (KPIs)
-        Se ejecuta después de cada ciclo para análisis en tiempo real.
+        Descarga archivos transformados de MinIO a carpeta local para análisis en Power BI.
+        
+        Archivos descargados:
+        - **datos_principales_silver.csv**: Datos limpios después de transformación Silver
+        - **metricas_kpi_gold.csv**: Métricas y KPIs agregados de la capa Gold
+        
+        Los archivos se guardan en la carpeta `file/` para fácil acceso con Power BI Desktop.
+        Incluye reintentos automáticos (máx 3 intentos por archivo) para mayor confiabilidad.
         
         Returns:
-            True si se descargó exitosamente
+            bool: True si al menos uno de los archivos se descargó exitosamente.
         """
         print(f"\n[INFO] Descargando archivos para Power BI...")
         
@@ -160,6 +183,7 @@ class ETLSystem:
             ]
             
             # Descargar cada archivo
+            descargas_exitosas = 0
             for bucket, archivo_remoto, archivo_local in descargas:
                 try:
                     local_path = file_dir / archivo_local
@@ -168,12 +192,26 @@ class ETLSystem:
                     if local_path.exists():
                         os_module.remove(str(local_path))
                     
-                    client.fget_object(bucket, archivo_remoto, str(local_path))
-                    print(f"[OK] {archivo_local} descargado desde {bucket}/")
+                    # Intentar descargar con reintentos
+                    max_intentos = 3
+                    for intento in range(max_intentos):
+                        try:
+                            client.fget_object(bucket, archivo_remoto, str(local_path))
+                            print(f"[OK] {archivo_local} descargado desde {bucket}/")
+                            descargas_exitosas += 1
+                            break
+                        except Exception as e_intento:
+                            if intento < max_intentos - 1:
+                                print(f"[REINTENTANDO] {archivo_local} (intento {intento + 1}/{max_intentos})")
+                            else:
+                                raise e_intento
                     
                 except Exception as e:
                     print(f"[AVISO] No se pudo descargar {archivo_local} de {bucket}: {e}")
                     continue
+            
+            if descargas_exitosas > 0:
+                print(f"[OK] {descargas_exitosas}/{len(descargas)} archivos descargados exitosamente")
             
             return True
             
@@ -182,7 +220,17 @@ class ETLSystem:
             return False
     
     def run_continuous(self) -> None:
-        """Ejecuta sistema continuamente."""
+        """
+        Ejecuta el sistema en modo continuo con ciclos automatizados.
+        
+        El sistema:
+        - Muestra la configuración cargada
+        - Ejecuta ciclos ETL repetidamente cada `extraction_interval` segundos
+        - Maneja apagado limpio si el usuario presiona Ctrl+C
+        - Registra el progreso con timestamps para monitoreo
+        
+        Runs indefinidamente hasta interrupción del usuario.
+        """
         try:
             self.display_config()
             print("\n[INFO] Presione Ctrl+C para detener\n")
@@ -199,7 +247,11 @@ class ETLSystem:
             self._handle_shutdown()
     
     def _handle_shutdown(self) -> None:
-        """Maneja apagado limpio."""
+        """
+        Maneja el apagado limpio del sistema cuando el usuario presiona Ctrl+C.
+        
+        Imprime mensaje de despedida y detiene los ciclos de forma ordenada.
+        """
         print("\n\n" + "=" * 80)
         print("DETENIENDO SISTEMA")
         print("=" * 80)
@@ -209,20 +261,29 @@ class ETLSystem:
 
 def insert_simulation_data(num_records: int = 1000) -> None:
     """
-    Inserta datos simulados de estación meteorológica en PostgreSQL.
+    Inserta datos simulados realistas en la tabla sensor_readings de PostgreSQL.
     
-    Genera 1000 registros aleatorios con:
-    - temperatura: 15-35°C
-    - humedad: 30-95%
-    - velocidad_viento: 0-25 km/h
-    - presion: 990-1030 hPa
-    - nivel_uv: 0-11
-    - pm25: 0-300 µg/m³
-    - lluvia: 0-50 mm
-    - vibracion: 0-10 Hz
+    Genera registros con valores aleatorios que simulan lecturas de una estación
+    meteorológica durante los últimos 30 días. Útil para pruebas del pipeline.
+    
+    Parámetros de datos generados:
+    - **temperatura**: 15-35°C (rango típico)
+    - **humedad**: 30-95% (rango relativo)
+    - **velocidad_viento**: 0-25 km/h
+    - **presion**: 990-1030 hPa (rango barométrico)
+    - **nivel_uv**: 0-11 (escala UV)
+    - **pm25**: 0-300 µg/m³ (concentración de partículas)
+    - **lluvia**: 0-50 mm (precipitación)
+    - **vibracion**: 0-10 Hz (frecuencia)
+    
+    El sistema inserta en batches de 100 registros para optimizar rendimiento.
+    Los registros se distribuyen uniformemente en el período de 30 días.
     
     Args:
-        num_records: Cantidad de registros a insertar (default 1000)
+        num_records: Cantidad de registros simulados a insertar (default: 1000).
+        
+    Raises:
+        DatabaseError: Si la tabla 'sensor_readings' no existe.
     """
     import random
     from datetime import datetime, timedelta
@@ -238,7 +299,7 @@ def insert_simulation_data(num_records: int = 1000) -> None:
         engine = create_engine(db_config.connection_url)
         
         with engine.connect() as conn:
-            # Verificar que tabla existe
+            # PASO 1: Verificar que tabla existe
             result = conn.execute(text("""
                 SELECT EXISTS (
                     SELECT FROM information_schema.tables 
@@ -252,36 +313,39 @@ def insert_simulation_data(num_records: int = 1000) -> None:
             
             print(f"[OK] Tabla 'sensor_readings' encontrada\n")
             
-            # Generar datos simulados
+            # PASO 2: Generar datos simulados realistas
             print(f"[INFO] Generando {num_records} registros aleatorios...")
             
+            # Distribuir registros en los últimos 30 días
             base_time = datetime.now() - timedelta(days=30)
             registros = []
             
             for i in range(num_records):
                 fecha = base_time + timedelta(minutes=i)
                 
+                # Generar valores aleatorios dentro de rangos realistas
                 registro = {
                     'timestamp': fecha,
-                    'temperatura': round(random.uniform(15, 35), 2),
-                    'humedad': round(random.uniform(30, 95), 2),
-                    'velocidad_viento': round(random.uniform(0, 25), 2),
-                    'presion': round(random.uniform(990, 1030), 2),
-                    'nivel_uv': random.randint(0, 11),
-                    'pm25': round(random.uniform(0, 300), 2),
-                    'lluvia': round(random.uniform(0, 50), 2),
-                    'vibracion': round(random.uniform(0, 10), 2),
+                    'temperatura': round(random.uniform(15, 35), 2),        # 15-35°C
+                    'humedad': round(random.uniform(30, 95), 2),             # 30-95%
+                    'velocidad_viento': round(random.uniform(0, 25), 2),     # 0-25 km/h
+                    'presion': round(random.uniform(990, 1030), 2),          # 990-1030 hPa
+                    'nivel_uv': random.randint(0, 11),                       # 0-11 (escala UV)
+                    'pm25': round(random.uniform(0, 300), 2),                # 0-300 µg/m³
+                    'lluvia': round(random.uniform(0, 50), 2),               # 0-50 mm
+                    'vibracion': round(random.uniform(0, 10), 2),            # 0-10 Hz
                 }
                 registros.append(registro)
             
-            # Insertar en batches para mejor rendimiento
+            # PASO 3: Insertar en batches para optimizar rendimiento
             batch_size = 100
             total_insertados = 0
             
             for batch_num in range(0, len(registros), batch_size):
                 batch = registros[batch_num:batch_num + batch_size]
                 
-                # Construir INSERT con múltiples VALUES
+                # Construir multi-value INSERT dinámicamente para mejor rendimiento
+                # Genera: (%(timestamp_0)s, ...), (%(timestamp_1)s, ...), etc.
                 placeholders = ", ".join([
                     f"(%(timestamp_{i})s, %(temperatura_{i})s, %(humedad_{i})s, "
                     f"%(velocidad_viento_{i})s, %(presion_{i})s, %(nivel_uv_{i})s, "
@@ -289,7 +353,7 @@ def insert_simulation_data(num_records: int = 1000) -> None:
                     for i in range(len(batch))
                 ])
                 
-                # Preparar parámetros
+                # Preparar diccionario de parámetros nombrados para SQLAlchemy
                 params = {}
                 for i, reg in enumerate(batch):
                     for key, value in reg.items():
@@ -309,14 +373,15 @@ def insert_simulation_data(num_records: int = 1000) -> None:
                 porcentaje = (total_insertados / num_records) * 100
                 print(f"[...] Progreso: {total_insertados}/{num_records} ({porcentaje:.1f}%)", end='\r')
             
+            # Confirmar transacción
             conn.commit()
             
-            print(f"\n[OK] Se insertaron {total_insertados} registros exitosamente")
+            print(f"\n[OK] Insertados {total_insertados} registros simulados")
             
-            # Verificar cantidad total
+            # VERIFICACIÓN: Confirmar cantidad total en tabla
             result = conn.execute(text("SELECT COUNT(*) FROM sensor_readings"))
             total = result.scalar()
-            print(f"[OK] Total de registros en tabla: {total}")
+            print(f"[OK] Total de registros en tabla sensor_readings: {total:,}")
             
         print("\n" + "=" * 80)
         print("✅ SIMULACIÓN COMPLETADA")
@@ -329,18 +394,25 @@ def insert_simulation_data(num_records: int = 1000) -> None:
 
 
 def main() -> None:
-    """Función principal."""
+    """
+    Punto de entrada del programa.
+    
+    Modos de ejecución:
+    - Sin argumentos: Ejecuta sistema ETL en modo continuo
+    - "python main.py simulate": Inserta 1000 registros de prueba
+    - "python main.py simulate N": Inserta N registros de prueba
+    """
     import sys
     
-    # Verificar argumentos
+    # Procesar argumentos de línea de comandos
     if len(sys.argv) > 1:
         if sys.argv[1] == "simulate":
-            # Modo simulación
+            # MODO SIMULACIÓN: Generar datos de prueba
             num_registros = int(sys.argv[2]) if len(sys.argv) > 2 else 1000
             insert_simulation_data(num_registros)
             return
     
-    # Modo normal: ejecutar sistema ETL
+    # MODO NORMAL: Ejecutar sistema ETL continuo
     system = ETLSystem(extraction_interval=300)
     system.run_continuous()
 

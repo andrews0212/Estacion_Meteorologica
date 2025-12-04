@@ -1,20 +1,27 @@
-"""Paquete `etl`.
+"""Paquete etl: Pipeline de extracción, transformación y carga en capas.
 
-Pipeline ETL completo con arquitectura en capas (Bronce/Silver) y organización
-en subpaquetes por responsabilidad.
+Pipeline ETL completo con arquitectura en capas (Bronze → Silver → Gold)
+y organización por responsabilidad en subpaquetes.
 
-Subpaquetes:
-- :mod:`etl.extractors`: Extracción de datos desde PostgreSQL
-- :mod:`etl.writers`: Serialización de datos a formatos (CSV, Parquet)
-- :mod:`etl.uploaders`: Carga de datos a MinIO (S3 compatible)
-- :mod:`etl.control`: Gestión de estado incremental (.etl_state.json)
-- :mod:`etl.managers`: Procesos de negocio (Silver, limpieza Bronce)
-- :mod:`etl.utils`: Utilidades de BD y constructores de queries
+**Subpaquetes principales**:
 
-Módulos principales:
-- :mod:`etl.pipeline`: Pipeline de orquestación
-- :mod:`etl.table_processor`: Procesamiento incremental por tabla
-- :mod:`etl.etl_state`: Gestor de estado usando archivo JSON
+- :mod:`etl.extractors`: Extracción incremental de datos desde PostgreSQL
+- :mod:`etl.writers`: Serialización de DataFrames a archivos (CSV, etc.)
+- :mod:`etl.uploaders`: Carga de archivos a MinIO (almacenamiento S3)
+- :mod:`etl.managers`: Gestión de versiones en capas Silver y Gold
+- :mod:`etl.control`: Tracking de estado de extracciones (.etl_state.json)
+- :mod:`etl.utils`: Utilidades de BD, queries y MinIO
+
+**Módulos principales**:
+
+- :mod:`etl.pipeline`: Pipeline de orquestación (punto de entrada)
+- :mod:`etl.table_processor`: Procesamiento por tabla con extracción incremental
+- :mod:`etl.notebook_executor`: Ejecución de notebooks PySpark
+- :mod:`etl.etl_state`: Gestor de estado en archivo JSON
+
+**Flujo de datos**:
+
+Bronze (extracción bruta) → Silver (limpieza) → Gold (KPIs)
 """
 
 # Utilidades
