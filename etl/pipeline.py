@@ -35,6 +35,7 @@ from sqlalchemy.pool import QueuePool
 from etl.control.control_manager import ExtractionStateManager
 from etl.extractors import TableInspector
 from etl.table_processor import TableProcessor
+from etl.utils.minio_utils import MinIOUtils
 from config import DatabaseConfig, MinIOConfig
 
 
@@ -51,10 +52,18 @@ class ETLPipeline:
             
         Nota:
             El engine SQLAlchemy se crea con pooling automático para reutilizar conexiones.
+            El bucket Bronze se crea automáticamente si no existe.
         """
         self.db_config = db_config
         self.minio_config = minio_config
         self.engine = self._create_engine()
+        
+        # Crear bucket bronze si no existe
+        try:
+            minio_utils = MinIOUtils(minio_config)
+            minio_utils.crear_bucket_si_no_existe(minio_config.bucket)
+        except Exception as e:
+            print(f"⚠️  Advertencia: No se pudo crear bucket Bronze: {e}")
     
     def _create_engine(self):
         """

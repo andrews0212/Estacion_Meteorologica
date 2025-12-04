@@ -32,6 +32,7 @@ if sys.platform == 'win32':
 from config import DatabaseConfig, MinIOConfig
 from etl.pipeline import ETLPipeline
 from etl.notebook_executor import NotebookExecutor
+from etl.utils.minio_utils import MinIOUtils
 
 
 class ETLSystem:
@@ -73,6 +74,9 @@ class ETLSystem:
         self.notebook_path = notebook_path
         self.notebook_kpi_path = notebook_kpi_path
         self.pipeline = ETLPipeline(self.db_config, self.minio_config)
+        
+        # Inicializar buckets en MinIO (crear si no existen)
+        self._initialize_minio_buckets()
     
     def display_config(self) -> None:
         """Muestra configuración cargada."""
@@ -83,6 +87,49 @@ class ETLSystem:
         print(f"{self.minio_config}")
         print(f"[OK] Intervalo de extracción: {self.extraction_interval}s")
         print("=" * 80)
+    
+    def _initialize_minio_buckets(self) -> None:
+        """
+        Inicializa los buckets de las 3 capas en MinIO.
+        
+        Crea automáticamente los buckets si no existen:
+        - **Bronze**: Almacenamiento de datos crudos extraídos de PostgreSQL
+        - **Silver**: Almacenamiento de datos limpios y transformados con PySpark
+        - **Gold**: Almacenamiento de KPIs y métricas agregadas
+        
+        Se ejecuta automáticamente en `__init__()` para garantizar que todos
+        los buckets necesarios estén disponibles antes de ejecutar el pipeline.
+        
+        Nota:
+            Si algún bucket ya existe, se omite sin error (es idempotente).
+        """
+        try:
+            minio_utils = MinIOUtils(self.minio_config)
+            
+            # Obtener nombre base del bucket configurado (ej: 'meteo')
+            bucket_base = self.minio_config.bucket.replace('-bronze', '')
+            
+            # Definir las 3 capas y crear si no existen
+            capas = {
+                'Bronze': f'{bucket_base}-bronze',
+                'Silver': f'{bucket_base}-silver',
+                'Gold': f'{bucket_base}-gold'
+            }
+            
+            print("\n[INIT] Validando buckets en MinIO...")
+            for capa_nombre, bucket_name in capas.items():
+                try:
+                    minio_utils.crear_bucket_si_no_existe(bucket_name)
+                    print(f"       ✅ Capa {capa_nombre}: {bucket_name}")
+                except Exception as e:
+                    print(f"       ⚠️  Error creando {capa_nombre}: {e}")
+            
+            print("[OK] Inicialización de buckets completada\n")
+            
+        except Exception as e:
+            print(f"[ADVERTENCIA] Error inicializando buckets: {e}")
+            print("             Continuando sin garantizar que todos los buckets existan.\n")
+    
     
     def run_cycle(self, cycle_num: int) -> bool:
         """

@@ -43,6 +43,8 @@ class LayerManager:
         Note:
             El bucket se construye reemplazando '-bronze' por el sufijo en el bucket
             configurado (ej: 'meteo-bronze' → 'meteo-silver')
+            
+            El bucket se crea automáticamente si no existe.
         """
         self.endpoint = minio_config.endpoint
         self.access_key = minio_config.access_key
@@ -56,6 +58,31 @@ class LayerManager:
             secret_key=self.secret_key,
             secure=getattr(minio_config, 'secure', False)
         )
+        
+        # Crear bucket si no existe
+        try:
+            self._create_bucket_if_not_exists()
+        except Exception as e:
+            print(f"⚠️  Advertencia al crear bucket {self.bucket_layer}: {e}")
+    
+    def _create_bucket_if_not_exists(self) -> None:
+        """
+        Crea el bucket de la capa si no existe.
+        
+        Operación idempotente: si el bucket ya existe, no hace nada.
+        Se ejecuta automáticamente en `__init__()`.
+        """
+        try:
+            # Verificar si el bucket existe
+            if not self.client.bucket_exists(self.bucket_layer):
+                # Crear el bucket
+                self.client.make_bucket(self.bucket_layer)
+                print(f"✅ Bucket creado: {self.bucket_layer}")
+            else:
+                print(f"✅ Bucket ya existe: {self.bucket_layer}")
+        except Exception as e:
+            # Si es error de acceso denegado o similar, re-raise
+            raise e
     
     def obtener_versiones_tabla(self, tabla: str) -> List[str]:
         """
