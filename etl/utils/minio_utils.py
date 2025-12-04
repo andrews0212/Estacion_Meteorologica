@@ -80,6 +80,24 @@ class MinIOUtils:
             print(f'⚠️ Error obteniendo archivo reciente: {e}')
             return None
     
+    def contar_objetos(self, bucket: str) -> int:
+        """
+        Cuenta la cantidad de objetos en un bucket.
+        
+        Args:
+            bucket: Nombre del bucket
+            
+        Returns:
+            int: Cantidad de objetos en el bucket
+        """
+        try:
+            objects = self.client.list_objects(bucket, recursive=True)
+            count = sum(1 for _ in objects)
+            return count
+        except Exception as e:
+            print(f'⚠️ Error contando objetos en {bucket}: {e}')
+            return 0
+    
     def descargar_csv(self, bucket: str, objeto: str) -> Optional[pd.DataFrame]:
         """
         Descarga un archivo CSV desde MinIO y lo carga como DataFrame.

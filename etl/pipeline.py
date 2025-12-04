@@ -124,9 +124,10 @@ class ETLPipeline:
         
         Pasos:
         1. Inicializa el gestor de estado (.etl_state.json) si no existe
-        2. Obtiene lista de todas las tablas del esquema 'public'
-        3. Para cada tabla: crea TableProcessor y ejecuta extracción incremental
-        4. Suma total de registros procesados
+        2. Verifica si la capa Bronze está vacía - si está vacía, reinicia el estado
+        3. Obtiene lista de todas las tablas del esquema 'public'
+        4. Para cada tabla: crea TableProcessor y ejecuta extracción incremental
+        5. Suma total de registros procesados
         
         Args:
             connection: Conexión SQLAlchemy activa a PostgreSQL
@@ -137,6 +138,9 @@ class ETLPipeline:
         # Inicializar gestor de estado (.etl_state.json)
         state_manager = ExtractionStateManager()
         state_manager.initialize_state()
+        
+        # Verificar si Bronze está vacía - si está vacía, reiniciar estado
+        self._check_and_reset_if_bronze_empty(state_manager)
         
         # Obtener tabla a procesar
         inspector = TableInspector(connection)
@@ -149,6 +153,39 @@ class ETLPipeline:
         
         print(f"\n🎯 RESUMEN: {total_records} registros nuevos en este batch.")
         return total_records
+    
+    def _check_and_reset_if_bronze_empty(self, state_manager: ExtractionStateManager) -> None:
+        """
+        Verifica si la capa Bronze está vacía. Si está vacía, reinicia el historial de estado.
+        
+        Lógica:
+        - Si Bronze tiene 0 archivos y el estado tiene registros → reinicia el estado
+        - Si Bronze tiene archivos pero estado está vacío → continúa (primer ciclo)
+        - Si ambos están vacíos → continúa (primer ciclo)
+        
+        Args:
+            state_manager: Gestor de estado para reiniciar si es necesario
+        """
+        try:
+            minio_utils = MinIOUtils(
+                self.minio_config.endpoint,
+                self.minio_config.access_key,
+                self.minio_config.secret_key
+            )
+            
+            # Contar objetos en Bronze
+            objeto_count = minio_utils.contar_objetos(self.minio_config.bucket)
+            
+            # Si Bronze está vacía
+            if objeto_count == 0:
+                print("\n⚠️  ALERTA: Capa Bronze vacía")
+                print("   Reiniciando historial de estado para carga completa...")
+                state_manager.reset_extraction_state()  # Reiniciar estado completo
+                print("   ✅ Estado reiniciado - Se cargará TODO desde cero")
+            
+        except Exception as e:
+            print(f"⚠️  Error verificando Bronze: {e}")
+            print("   Continuando sin reiniciar estado...")
     
     def run_continuous(self, interval_seconds: int = 300) -> None:
         """
