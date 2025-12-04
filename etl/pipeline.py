@@ -60,7 +60,11 @@ class ETLPipeline:
         
         # Crear bucket bronze si no existe
         try:
-            minio_utils = MinIOUtils(minio_config)
+            minio_utils = MinIOUtils(
+                minio_config.endpoint,
+                minio_config.access_key,
+                minio_config.secret_key
+            )
             minio_utils.crear_bucket_si_no_existe(minio_config.bucket)
         except Exception as e:
             print(f"⚠️  Advertencia: No se pudo crear bucket Bronze: {e}")

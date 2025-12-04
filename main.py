@@ -104,7 +104,11 @@ class ETLSystem:
             Si algún bucket ya existe, se omite sin error (es idempotente).
         """
         try:
-            minio_utils = MinIOUtils(self.minio_config)
+            minio_utils = MinIOUtils(
+                self.minio_config.endpoint,
+                self.minio_config.access_key,
+                self.minio_config.secret_key
+            )
             
             # Obtener nombre base del bucket configurado (ej: 'meteo')
             bucket_base = self.minio_config.bucket.replace('-bronze', '')
