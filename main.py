@@ -201,7 +201,7 @@ class ETLSystem:
         Descarga archivos transformados de MinIO a carpeta local para análisis en Power BI.
         
         Archivos descargados:
-        - **datos_principales_silver.csv**: Datos limpios después de transformación Silver
+        - **datos_principales_gold.csv**: Datos transformados de la capa Gold
         - **metricas_kpi_gold.csv**: Métricas y KPIs agregados de la capa Gold
         
         Los archivos se guardan en la carpeta `file/` para fácil acceso con Power BI Desktop.
@@ -229,8 +229,8 @@ class ETLSystem:
             
             # Archivos a descargar: (bucket, archivo_remoto, nombre_local)
             descargas = [
-                ("meteo-silver", "datos_principales_silver.csv", "datos_principales_silver.csv"),
-                ("meteo-gold", "metricas_kpi_gold.csv", "metricas_kpi_gold.csv"),
+                ("meteo-gold", "datos/datos_principales_gold.csv", "datos_principales_gold.csv"),
+                ("meteo-gold", "kpi/metricas_kpi_gold.csv", "metricas_kpi_gold.csv"),
             ]
             
             # Descargar cada archivo
